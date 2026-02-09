@@ -3,6 +3,7 @@ package zhipu_4v
 import (
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/dto"
@@ -48,6 +49,7 @@ type zhipuImageData struct {
 type openAIImagePayload struct {
 	Created int64             `json:"created"`
 	Data    []openAIImageData `json:"data"`
+	Usage   *dto.Usage        `json:"usage,omitempty"`
 }
 
 type openAIImageData struct {
@@ -85,10 +87,6 @@ func zhipu4vImageHandler(c *gin.Context, resp *http.Response, info *relaycommon.
 		if url == "" {
 			url = data.ImageUrl
 		}
-		if url == "" {
-			logger.LogWarn(c, "zhipu_image_missing_url")
-			continue
-		}
 
 		var b64 string
 		switch {
@@ -96,13 +94,19 @@ func zhipu4vImageHandler(c *gin.Context, resp *http.Response, info *relaycommon.
 			b64 = data.B64Json
 		case data.B64Image != "":
 			b64 = data.B64Image
-		default:
+		case url != "" && (strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://")):
 			_, downloaded, err := service.GetImageFromUrl(url)
 			if err != nil {
 				logger.LogError(c, "zhipu_image_get_b64_failed: "+err.Error())
 				continue
 			}
 			b64 = downloaded
+		case url != "":
+			// URL field contains raw base64 data
+			b64 = url
+		default:
+			logger.LogWarn(c, "zhipu_image_missing_url")
+			continue
 		}
 
 		if b64 == "" {
@@ -116,6 +120,21 @@ func zhipu4vImageHandler(c *gin.Context, resp *http.Response, info *relaycommon.
 		payload.Data = append(payload.Data, imageData)
 	}
 
+	usage := &dto.Usage{}
+	if zhipuResp.Usage != nil {
+		usage = zhipuResp.Usage
+		if usage.PromptTokens == 0 && usage.InputTokens != 0 {
+			usage.PromptTokens = usage.InputTokens
+		}
+		if usage.CompletionTokens == 0 && usage.OutputTokens != 0 {
+			usage.CompletionTokens = usage.OutputTokens
+		}
+		if usage.TotalTokens == 0 {
+			usage.TotalTokens = usage.PromptTokens + usage.CompletionTokens
+		}
+	}
+	payload.Usage = usage
+
 	jsonResp, err := common.Marshal(payload)
 	if err != nil {
 		return nil, types.NewError(err, types.ErrorCodeBadResponseBody)
@@ -123,5 +142,5 @@ func zhipu4vImageHandler(c *gin.Context, resp *http.Response, info *relaycommon.
 
 	service.IOCopyBytesGracefully(c, resp, jsonResp)
 
-	return &dto.Usage{}, nil
+	return usage, nil
 }

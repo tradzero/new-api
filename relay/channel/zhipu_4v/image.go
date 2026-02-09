@@ -20,6 +20,7 @@ type zhipuImageRequest struct {
 	Prompt           string `json:"prompt"`
 	Quality          string `json:"quality,omitempty"`
 	Size             string `json:"size,omitempty"`
+	Ratio            string `json:"ratio,omitempty"`
 	WatermarkEnabled *bool  `json:"watermark_enabled,omitempty"`
 	UserID           string `json:"user_id,omitempty"`
 }

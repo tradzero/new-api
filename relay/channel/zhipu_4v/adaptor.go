@@ -1,6 +1,7 @@
 package zhipu_4v
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -36,7 +37,33 @@ func (a *Adaptor) ConvertAudioRequest(c *gin.Context, info *relaycommon.RelayInf
 }
 
 func (a *Adaptor) ConvertImageRequest(c *gin.Context, info *relaycommon.RelayInfo, request dto.ImageRequest) (any, error) {
-	return request, nil
+	zhipuReq := zhipuImageRequest{
+		Model:   request.Model,
+		Prompt:  request.Prompt,
+		Quality: request.Quality,
+		Size:    request.Size,
+	}
+	if len(request.WatermarkEnabled) > 0 {
+		var v bool
+		if err := json.Unmarshal(request.WatermarkEnabled, &v); err == nil {
+			zhipuReq.WatermarkEnabled = &v
+		}
+	}
+	if len(request.UserId) > 0 {
+		var v string
+		if err := json.Unmarshal(request.UserId, &v); err == nil {
+			zhipuReq.UserID = v
+		}
+	}
+
+	// Populate struct fields from Extra (only fields defined in zhipuImageRequest are accepted)
+	if len(request.Extra) > 0 {
+		extraJSON, err := json.Marshal(request.Extra)
+		if err == nil {
+			json.Unmarshal(extraJSON, &zhipuReq)
+		}
+	}
+	return zhipuReq, nil
 }
 
 func (a *Adaptor) Init(info *relaycommon.RelayInfo) {

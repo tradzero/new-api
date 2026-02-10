@@ -620,6 +620,18 @@ type TaskSubmitReq struct {
 	Seconds        string                 `json:"seconds,omitempty"`
 	InputReference string                 `json:"input_reference,omitempty"`
 	Metadata       map[string]interface{} `json:"metadata,omitempty"`
+	// Video generation params
+	// for zhipu adaptor
+	AspectRatio        string `json:"aspect_ratio,omitempty"`
+	NegativePrompt     string `json:"negative_prompt,omitempty"`
+	PersonGeneration   string `json:"person_generation,omitempty"`
+	SampleCount        int    `json:"sample_count,omitempty"`
+	Seed               int    `json:"seed,omitempty"`
+	ResizeMode         string `json:"resize_mode,omitempty"`
+	CompressionQuality string `json:"compression_quality,omitempty"`
+	WithAudio          *bool  `json:"with_audio,omitempty"`
+	RequestID          string `json:"request_id,omitempty"`
+	ImageURL           any    `json:"image_url,omitempty"`
 }
 
 func (t *TaskSubmitReq) GetPrompt() string {

@@ -36,6 +36,14 @@ type zhipuVideoRequest struct {
 	Duration         int    `json:"duration,omitempty"`
 	RequestID        string `json:"request_id,omitempty"`
 	UserID           string `json:"user_id,omitempty"`
+	// Common video generation params
+	AspectRatio        string `json:"aspect_ratio,omitempty"`
+	NegativePrompt     string `json:"negative_prompt,omitempty"`
+	PersonGeneration   string `json:"person_generation,omitempty"`
+	SampleCount        int    `json:"sample_count,omitempty"`
+	Seed               int    `json:"seed,omitempty"`
+	ResizeMode         string `json:"resize_mode,omitempty"`
+	CompressionQuality string `json:"compression_quality,omitempty"`
 }
 
 type zhipuVideoSubmitResponse struct {
@@ -76,6 +84,14 @@ var pricingRegistry = map[string]PricingFunc{
 	// Sora family: per-second + resolution multiplier
 	"sora-2-pro": pricingSoraV2,
 	"sora-2":     pricingSoraV2,
+
+	// Veo generate family: per-second + audio multiplier (2x with audio)
+	"veo-3.0-generate": makePricingVeo(2.0),
+	"veo-3.1-generate": makePricingVeo(2.0),
+
+	// Veo fast family: per-second + audio multiplier (1.5x with audio)
+	"veo-3.0-fast-generate": makePricingVeo(1.5),
+	"veo-3.1-fast-generate": makePricingVeo(1.5),
 }
 
 // pricingPerSecond bills by duration only (default for cogvideox models).
@@ -102,6 +118,28 @@ func pricingSoraV2(req *relaycommon.TaskSubmitReq) map[string]float64 {
 	return map[string]float64{
 		"seconds": float64(duration),
 		"size":    sizeRatio,
+	}
+}
+
+// makePricingVeo returns a PricingFunc for Veo models.
+// ModelPrice should be set to the per-second rate WITHOUT audio.
+// audioRatio is the multiplier applied when with_audio is true.
+//   - generate models: audioRatio=2.0 ($0.20/s → $0.40/s)
+//   - fast models:     audioRatio=1.5 ($0.10/s → $0.15/s)
+func makePricingVeo(audioRatio float64) PricingFunc {
+	return func(req *relaycommon.TaskSubmitReq) map[string]float64 {
+		duration := 5
+		if req.Duration > 0 {
+			duration = req.Duration
+		}
+		audio := 1.0
+		if req.WithAudio != nil && *req.WithAudio {
+			audio = audioRatio
+		}
+		return map[string]float64{
+			"seconds": float64(duration),
+			"audio":   audio,
+		}
 	}
 }
 
@@ -136,6 +174,8 @@ var (
 	ModelList = []string{
 		"cogvideox", "cogvideox-2", "cogvideox-3",
 		"sora-2", "sora-2-pro",
+		"veo-3.0-generate-001", "veo-3.0-fast-generate-001",
+		"veo-3.1-generate-preview", "veo-3.1-fast-generate-preview",
 	}
 	ChannelName = "zhipu_video"
 
@@ -347,17 +387,27 @@ func (a *TaskAdaptor) ConvertToOpenAIVideo(originTask *model.Task) ([]byte, erro
 
 func (a *TaskAdaptor) convertToRequestPayload(req *relaycommon.TaskSubmitReq) *zhipuVideoRequest {
 	body := &zhipuVideoRequest{
-		Model:  req.Model,
-		Prompt: req.Prompt,
+		Model:              req.Model,
+		Prompt:             req.Prompt,
+		WithAudio:          req.WithAudio,
+		RequestID:          req.RequestID,
+		AspectRatio:        req.AspectRatio,
+		NegativePrompt:     req.NegativePrompt,
+		PersonGeneration:   req.PersonGeneration,
+		SampleCount:        req.SampleCount,
+		Seed:               req.Seed,
+		ResizeMode:         req.ResizeMode,
+		CompressionQuality: req.CompressionQuality,
 	}
 
 	if body.Model == "" {
 		body.Model = "cogvideox-3"
 	}
 
-	// Handle image input
-	if len(req.Images) > 1 {
-		// Multiple images: first frame + last frame (for start-end models)
+	// Handle image input: prefer image_url (direct passthrough), fallback to images/image
+	if req.ImageURL != nil {
+		body.ImageURL = req.ImageURL
+	} else if len(req.Images) > 1 {
 		body.ImageURL = req.Images
 	} else if len(req.Images) == 1 {
 		body.ImageURL = req.Images[0]
@@ -375,13 +425,10 @@ func (a *TaskAdaptor) convertToRequestPayload(req *relaycommon.TaskSubmitReq) *z
 		body.Duration = req.Duration
 	}
 
-	// Apply metadata overrides (quality, with_audio, watermark_enabled, fps, etc.)
+	// Apply metadata overrides (quality, watermark_enabled, fps, user_id)
 	if req.Metadata != nil {
 		if v, ok := req.Metadata["quality"].(string); ok {
 			body.Quality = v
-		}
-		if v, ok := req.Metadata["with_audio"].(bool); ok {
-			body.WithAudio = &v
 		}
 		if v, ok := req.Metadata["watermark_enabled"].(bool); ok {
 			body.WatermarkEnabled = &v
@@ -393,9 +440,6 @@ func (a *TaskAdaptor) convertToRequestPayload(req *relaycommon.TaskSubmitReq) *z
 			case int:
 				body.FPS = fv
 			}
-		}
-		if v, ok := req.Metadata["request_id"].(string); ok {
-			body.RequestID = v
 		}
 		if v, ok := req.Metadata["user_id"].(string); ok {
 			body.UserID = v

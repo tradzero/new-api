@@ -11,6 +11,7 @@ import (
 	"github.com/QuantumNous/new-api/common"
 	channelconstant "github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/dto"
+	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/relay/channel"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
@@ -59,12 +60,82 @@ type zhipuVideoFetchResponse struct {
 }
 
 // ============================
+// Model pricing configuration
+// ============================
+
+// PricingFunc calculates OtherRatios for a given model based on its request parameters.
+// Each model (or model family) can have its own pricing logic.
+type PricingFunc func(req *relaycommon.TaskSubmitReq) map[string]float64
+
+// pricingRegistry maps model name prefixes to their pricing functions.
+// Add new entries here to support pricing for additional models.
+var pricingRegistry = map[string]PricingFunc{
+	// CogVideoX family: per-second billing
+	"cogvideox": pricingPerSecond,
+
+	// Sora family: per-second + resolution multiplier
+	"sora-2-pro": pricingSoraV2,
+	"sora-2":     pricingSoraV2,
+}
+
+// pricingPerSecond bills by duration only (default for cogvideox models).
+func pricingPerSecond(req *relaycommon.TaskSubmitReq) map[string]float64 {
+	duration := 5
+	if req.Duration > 0 {
+		duration = req.Duration
+	}
+	return map[string]float64{
+		"seconds": float64(duration),
+	}
+}
+
+// pricingSoraV2 bills by duration + resolution multiplier.
+func pricingSoraV2(req *relaycommon.TaskSubmitReq) map[string]float64 {
+	duration := 4
+	if req.Duration > 0 {
+		duration = req.Duration
+	}
+	sizeRatio := 1.0
+	if req.Size == "1792x1024" || req.Size == "1024x1792" {
+		sizeRatio = 1.666667
+	}
+	return map[string]float64{
+		"seconds": float64(duration),
+		"size":    sizeRatio,
+	}
+}
+
+// getPricingFunc returns the PricingFunc for a given model name.
+// It first tries exact match, then prefix match (longest prefix wins).
+func getPricingFunc(modelName string) PricingFunc {
+	// Exact match first
+	if fn, ok := pricingRegistry[modelName]; ok {
+		return fn
+	}
+	// Prefix match: find longest matching prefix
+	var bestFn PricingFunc
+	bestLen := 0
+	for prefix, fn := range pricingRegistry {
+		if len(prefix) > bestLen && len(modelName) >= len(prefix) && modelName[:len(prefix)] == prefix {
+			bestFn = fn
+			bestLen = len(prefix)
+		}
+	}
+	if bestFn != nil {
+		return bestFn
+	}
+	// Default: per-second billing
+	return pricingPerSecond
+}
+
+// ============================
 // TaskAdaptor implementation
 // ============================
 
 var (
-	ModelList   = []string{
-		"cogvideox", "cogvideox-2", "cogvideox-3", // General models for zhipu
+	ModelList = []string{
+		"cogvideox", "cogvideox-2", "cogvideox-3",
+		"sora-2", "sora-2-pro",
 	}
 	ChannelName = "zhipu_video"
 
@@ -93,16 +164,16 @@ func (a *TaskAdaptor) ValidateRequestAndSetAction(c *gin.Context, info *relaycom
 		return
 	}
 
-	// Set per-second billing: default 5 seconds if duration not specified
-	duration := 5
+	// Apply model-specific pricing
+	var req relaycommon.TaskSubmitReq
 	if v, exists := c.Get("task_request"); exists {
-		if req, ok := v.(relaycommon.TaskSubmitReq); ok && req.Duration > 0 {
-			duration = req.Duration
+		if r, ok := v.(relaycommon.TaskSubmitReq); ok {
+			req = r
 		}
 	}
-	info.PriceData.OtherRatios = map[string]float64{
-		"seconds": float64(duration),
-	}
+	pricingFn := getPricingFunc(req.Model)
+	info.PriceData.OtherRatios = pricingFn(&req)
+
 	return
 }
 
@@ -133,6 +204,10 @@ func (a *TaskAdaptor) BuildRequestBody(c *gin.Context, info *relaycommon.RelayIn
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO: debug only, remove after testing
+	logger.LogInfo(c, fmt.Sprintf("zhipu video request body: %s", string(data)))
+
 	return bytes.NewReader(data), nil
 }
 
@@ -147,6 +222,9 @@ func (a *TaskAdaptor) DoResponse(c *gin.Context, resp *http.Response, info *rela
 		return
 	}
 	_ = resp.Body.Close()
+
+	// TODO: debug only, remove after testing
+	logger.LogInfo(c, fmt.Sprintf("zhipu video response body: %s", string(responseBody)))
 
 	var zResp zhipuVideoSubmitResponse
 	if err := json.Unmarshal(responseBody, &zResp); err != nil {

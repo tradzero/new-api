@@ -175,6 +175,8 @@ func zhipu4vImageHandler(c *gin.Context, resp *http.Response, info *relaycommon.
 	}
 	payload.Usage = usage
 
+	// avoid escaped characters in JSON response
+	// response url format problem
 	var buf bytes.Buffer
 	encoder := json.NewEncoder(&buf)
 	encoder.SetEscapeHTML(false)

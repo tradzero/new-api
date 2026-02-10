@@ -1,6 +1,7 @@
 package zhipu_4v
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -19,7 +20,7 @@ import (
 type sequentialImageGenerationOptions struct {
     MaxImages      int    `json:"max_images,omitempty"`
     ResponseFormat string `json:"response_format,omitempty"`
-    Watermark      bool   `json:"watermark,omitempty"`
+    Watermark      *bool  `json:"watermark,omitempty"`
 }
 
 
@@ -32,7 +33,7 @@ type zhipuImageRequest struct {
 	WatermarkEnabled *bool  `json:"watermark_enabled,omitempty"`
 	UserID           string `json:"user_id,omitempty"`
 	Seed             string `json:"seed,omitempty"`
-	SequentialImageGeneration bool `json:"sequential_image_generation,omitempty"`
+	SequentialImageGeneration *bool `json:"sequential_image_generation,omitempty"`
 	SequentialImageGenerationOptions *sequentialImageGenerationOptions `json:"sequential_image_generation_options,omitempty"`
 }
 
@@ -98,10 +99,20 @@ func zhipu4vImageHandler(c *gin.Context, resp *http.Response, info *relaycommon.
 	} else {
 		payload.Created = info.StartTime.Unix()
 	}
-	// Determine response format from original request
+	// Determine response format: check top-level first, then fall back to sequential_image_generation_options
 	responseFormat := ""
 	if imageReq, ok := info.Request.(*dto.ImageRequest); ok {
 		responseFormat = imageReq.ResponseFormat
+		if responseFormat == "" {
+			if val, ok := imageReq.Extra["sequential_image_generation_options"]; ok {
+				var opts struct {
+					ResponseFormat string `json:"response_format"`
+				}
+				if err := json.Unmarshal(val, &opts); err == nil {
+					responseFormat = opts.ResponseFormat
+				}
+			}
+		}
 	}
 
 	for _, data := range zhipuResp.Data {

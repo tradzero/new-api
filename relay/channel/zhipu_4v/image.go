@@ -15,6 +15,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type sequentialImageGenerationOptions struct {
+    MaxImages      int    `json:"max_images,omitempty"`
+    ResponseFormat string `json:"response_format,omitempty"`
+    Watermark      bool   `json:"watermark,omitempty"`
+}
+
+
 type zhipuImageRequest struct {
 	Model            string `json:"model"`
 	Prompt           string `json:"prompt"`
@@ -23,6 +30,9 @@ type zhipuImageRequest struct {
 	Ratio            string `json:"ratio,omitempty"`
 	WatermarkEnabled *bool  `json:"watermark_enabled,omitempty"`
 	UserID           string `json:"user_id,omitempty"`
+	Seed             string `json:"seed,omitempty"`
+	SequentialImageGeneration bool `json:"sequential_image_generation,omitempty"`
+	SequentialImageGenerationOptions *sequentialImageGenerationOptions `json:"sequential_image_generation_options,omitempty"`
 }
 
 type zhipuImageResponse struct {

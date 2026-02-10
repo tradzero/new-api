@@ -1,6 +1,7 @@
 package zhipu_4v
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -174,10 +175,13 @@ func zhipu4vImageHandler(c *gin.Context, resp *http.Response, info *relaycommon.
 	}
 	payload.Usage = usage
 
-	jsonResp, err := common.Marshal(payload)
-	if err != nil {
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(payload); err != nil {
 		return nil, types.NewError(err, types.ErrorCodeBadResponseBody)
 	}
+	jsonResp := bytes.TrimSuffix(buf.Bytes(), []byte("\n"))
 
 	service.IOCopyBytesGracefully(c, resp, jsonResp)
 

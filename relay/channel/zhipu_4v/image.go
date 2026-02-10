@@ -1,6 +1,7 @@
 package zhipu_4v
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -74,9 +75,8 @@ func zhipu4vImageHandler(c *gin.Context, resp *http.Response, info *relaycommon.
 	}
 	service.CloseResponseBodyGracefully(resp)
 
-	if common.DebugEnabled {
-		println("zhipu image response body:", string(responseBody))
-	}
+	// TODO: debug only, remove after testing
+	logger.LogInfo(c, fmt.Sprintf("zhipu image response body: %s", string(responseBody)))
 
 	var zhipuResp zhipuImageResponse
 	if err := common.Unmarshal(responseBody, &zhipuResp); err != nil {

@@ -9,6 +9,7 @@ import (
 
 	channelconstant "github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/dto"
+	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/relay/channel"
 	"github.com/QuantumNous/new-api/relay/channel/claude"
 	"github.com/QuantumNous/new-api/relay/channel/openai"
@@ -63,6 +64,12 @@ func (a *Adaptor) ConvertImageRequest(c *gin.Context, info *relaycommon.RelayInf
 			json.Unmarshal(extraJSON, &zhipuReq)
 		}
 	}
+
+	// TODO: debug only, remove after testing
+	if debugJSON, err := json.Marshal(zhipuReq); err == nil {
+		logger.LogInfo(c, fmt.Sprintf("zhipu image request body: %s", string(debugJSON)))
+	}
+
 	return zhipuReq, nil
 }
 

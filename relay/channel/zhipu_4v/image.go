@@ -32,8 +32,8 @@ type zhipuImageRequest struct {
 	Ratio            string `json:"ratio,omitempty"`
 	WatermarkEnabled *bool  `json:"watermark_enabled,omitempty"`
 	UserID           string `json:"user_id,omitempty"`
-	Seed             string `json:"seed,omitempty"`
-	SequentialImageGeneration *bool `json:"sequential_image_generation,omitempty"`
+	Seed             int `json:"seed,omitempty"`
+	SequentialImageGeneration string `json:"sequential_image_generation,omitempty"`
 	SequentialImageGenerationOptions *sequentialImageGenerationOptions `json:"sequential_image_generation_options,omitempty"`
 }
 

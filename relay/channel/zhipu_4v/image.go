@@ -65,7 +65,8 @@ type openAIImagePayload struct {
 }
 
 type openAIImageData struct {
-	B64Json string `json:"b64_json"`
+	Url     string `json:"url,omitempty"`
+	B64Json string `json:"b64_json,omitempty"`
 }
 
 func zhipu4vImageHandler(c *gin.Context, resp *http.Response, info *relaycommon.RelayInfo) (*dto.Usage, *types.NewAPIError) {
@@ -97,41 +98,53 @@ func zhipu4vImageHandler(c *gin.Context, resp *http.Response, info *relaycommon.
 	} else {
 		payload.Created = info.StartTime.Unix()
 	}
+	// Determine response format from original request
+	responseFormat := ""
+	if imageReq, ok := info.Request.(*dto.ImageRequest); ok {
+		responseFormat = imageReq.ResponseFormat
+	}
+
 	for _, data := range zhipuResp.Data {
 		url := data.Url
 		if url == "" {
 			url = data.ImageUrl
 		}
 
-		var b64 string
-		switch {
-		case data.B64Json != "":
-			b64 = data.B64Json
-		case data.B64Image != "":
-			b64 = data.B64Image
-		case url != "" && (strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://")):
-			_, downloaded, err := service.GetImageFromUrl(url)
-			if err != nil {
-				logger.LogError(c, "zhipu_image_get_b64_failed: "+err.Error())
+		var imageData openAIImageData
+
+		// If response_format is "url" and we have an HTTP URL, return it directly
+		if responseFormat == "url" && url != "" && (strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://")) {
+			imageData.Url = url
+		} else {
+			// Otherwise convert to base64
+			var b64 string
+			switch {
+			case data.B64Json != "":
+				b64 = data.B64Json
+			case data.B64Image != "":
+				b64 = data.B64Image
+			case url != "" && (strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://")):
+				_, downloaded, err := service.GetImageFromUrl(url)
+				if err != nil {
+					logger.LogError(c, "zhipu_image_get_b64_failed: "+err.Error())
+					continue
+				}
+				b64 = downloaded
+			case url != "":
+				// URL field contains raw base64 data
+				b64 = url
+			default:
+				logger.LogWarn(c, "zhipu_image_missing_url")
 				continue
 			}
-			b64 = downloaded
-		case url != "":
-			// URL field contains raw base64 data
-			b64 = url
-		default:
-			logger.LogWarn(c, "zhipu_image_missing_url")
-			continue
+
+			if b64 == "" {
+				logger.LogWarn(c, "zhipu_image_empty_b64")
+				continue
+			}
+			imageData.B64Json = b64
 		}
 
-		if b64 == "" {
-			logger.LogWarn(c, "zhipu_image_empty_b64")
-			continue
-		}
-
-		imageData := openAIImageData{
-			B64Json: b64,
-		}
 		payload.Data = append(payload.Data, imageData)
 	}
 

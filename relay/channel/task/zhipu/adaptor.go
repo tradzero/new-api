@@ -447,7 +447,6 @@ func (a *TaskAdaptor) convertToRequestPayload(req *relaycommon.TaskSubmitReq) *z
 	body := &zhipuVideoRequest{
 		Model:              req.Model,
 		Prompt:             req.Prompt,
-		Mode:               req.Mode,
 		WithAudio:          req.WithAudio,
 		RequestID:          req.RequestID,
 		AspectRatio:        req.AspectRatio,

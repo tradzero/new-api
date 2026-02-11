@@ -96,6 +96,21 @@ var pricingRegistry = map[string]PricingFunc{
 	// Veo fast family: per-second + audio multiplier (1.5x with audio)
 	"veo-3.0-fast-generate": makePricingVeo(1.5),
 	"veo-3.1-fast-generate": makePricingVeo(1.5),
+
+	// Kling standard family: per-5s + mode multiplier (pro=1.75x)
+	// ModelPrice = std/5s price
+	"kling-v1-6":       makePricingKling(1.75),
+	"kling-multi-v1-6": makePricingKling(1.75),
+	"kling-v2-1":       makePricingKling(1.75),
+
+	// Kling master family: per-5s, no mode
+	// ModelPrice = 5s price
+	"kling-v2-master":   pricingKlingMaster,
+	"kling-v2-1-master": pricingKlingMaster,
+
+	// Kling turbo: per-5s + mode multiplier (pro=5/3x)
+	// ModelPrice = std/5s price
+	"kling-v2-5-turbo": makePricingKling(5.0 / 3.0),
 }
 
 // pricingPerSecond bills by duration only (default for cogvideox models).
@@ -149,6 +164,40 @@ func makePricingVeo(audioRatio float64) PricingFunc {
 			"audio":        audio,
 			"sample_count": count,
 		}
+	}
+}
+
+// makePricingKling returns a PricingFunc for Kling models with std/pro mode.
+// ModelPrice should be set to the std/5s price.
+// proRatio is the multiplier applied when mode is "pro".
+//   - v1-6/multi/v2-1: proRatio=1.75 ($0.28 → $0.49)
+//   - v2-5-turbo:      proRatio=5/3  ($0.21 → $0.35)
+func makePricingKling(proRatio float64) PricingFunc {
+	return func(req *relaycommon.TaskSubmitReq) map[string]float64 {
+		duration := 5
+		if req.Duration > 0 {
+			duration = req.Duration
+		}
+		modeRatio := 1.0
+		if req.Mode == "pro" {
+			modeRatio = proRatio
+		}
+		return map[string]float64{
+			"seconds": float64(duration) / 5.0,
+			"mode":    modeRatio,
+		}
+	}
+}
+
+// pricingKlingMaster bills by duration only, no mode distinction.
+// ModelPrice should be set to the 5s price.
+func pricingKlingMaster(req *relaycommon.TaskSubmitReq) map[string]float64 {
+	duration := 5
+	if req.Duration > 0 {
+		duration = req.Duration
+	}
+	return map[string]float64{
+		"seconds": float64(duration) / 5.0,
 	}
 }
 

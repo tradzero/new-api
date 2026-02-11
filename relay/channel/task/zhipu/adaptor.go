@@ -136,9 +136,14 @@ func makePricingVeo(audioRatio float64) PricingFunc {
 		if req.WithAudio != nil && *req.WithAudio {
 			audio = audioRatio
 		}
+		count := 1.0
+		if req.SampleCount > 1 {
+			count = float64(req.SampleCount)
+		}
 		return map[string]float64{
-			"seconds": float64(duration),
-			"audio":   audio,
+			"seconds":      float64(duration),
+			"audio":        audio,
+			"sample_count": count,
 		}
 	}
 }

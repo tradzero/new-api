@@ -40,6 +40,7 @@ func (a *Adaptor) ConvertImageRequest(c *gin.Context, info *relaycommon.RelayInf
 	zhipuReq := zhipuImageRequest{
 		Model:   request.Model,
 		Prompt:  request.Prompt,
+		N:       request.N,
 		Quality: request.Quality,
 		Size:    request.Size,
 	}

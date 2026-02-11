@@ -27,14 +27,20 @@ type sequentialImageGenerationOptions struct {
 type zhipuImageRequest struct {
 	Model            string `json:"model"`
 	Prompt           string `json:"prompt"`
+	N                uint   `json:"n,omitempty"`
 	Quality          string `json:"quality,omitempty"`
 	Size             string `json:"size,omitempty"`
 	Ratio            string `json:"ratio,omitempty"`
 	WatermarkEnabled *bool  `json:"watermark_enabled,omitempty"`
 	UserID           string `json:"user_id,omitempty"`
-	Seed             int `json:"seed,omitempty"`
-	SequentialImageGeneration string `json:"sequential_image_generation,omitempty"`
+	Seed             int    `json:"seed,omitempty"`
+	SequentialImageGeneration        string                           `json:"sequential_image_generation,omitempty"`
 	SequentialImageGenerationOptions *sequentialImageGenerationOptions `json:"sequential_image_generation_options,omitempty"`
+	// Kling image params
+	AspectRatio string `json:"aspect_ratio,omitempty"`
+	Resolution  string `json:"resolution,omitempty"`
+	ImageList   any    `json:"image_list,omitempty"`
+	ElementList any    `json:"element_list,omitempty"`
 }
 
 type zhipuImageResponse struct {

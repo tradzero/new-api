@@ -27,6 +27,7 @@ import (
 type zhipuVideoRequest struct {
 	Model            string `json:"model"`
 	Prompt           string `json:"prompt,omitempty"`
+	// Mode             string `json:"mode,omitempty"`
 	ImageURL         any    `json:"image_url,omitempty"`
 	Quality          string `json:"quality,omitempty"`
 	WithAudio        *bool  `json:"with_audio,omitempty"`
@@ -37,6 +38,9 @@ type zhipuVideoRequest struct {
 	RequestID        string `json:"request_id,omitempty"`
 	UserID           string `json:"user_id,omitempty"`
 	// Common video generation params
+	FirstFrameImage  string `json:"first_frame_image,omitempty"`
+	LastFrameImage   string `json:"last_frame_image,omitempty"`
+	
 	AspectRatio        string `json:"aspect_ratio,omitempty"`
 	NegativePrompt     string `json:"negative_prompt,omitempty"`
 	PersonGeneration   string `json:"person_generation,omitempty"`
@@ -394,6 +398,7 @@ func (a *TaskAdaptor) convertToRequestPayload(req *relaycommon.TaskSubmitReq) *z
 	body := &zhipuVideoRequest{
 		Model:              req.Model,
 		Prompt:             req.Prompt,
+		Mode:               req.Mode,
 		WithAudio:          req.WithAudio,
 		RequestID:          req.RequestID,
 		AspectRatio:        req.AspectRatio,
@@ -448,6 +453,12 @@ func (a *TaskAdaptor) convertToRequestPayload(req *relaycommon.TaskSubmitReq) *z
 		}
 		if v, ok := req.Metadata["user_id"].(string); ok {
 			body.UserID = v
+		}
+		if v, ok := req.Metadata["first_frame_image"].(string); ok {
+			body.FirstFrameImage = v
+		}
+		if v, ok := req.Metadata["last_frame_image"].(string); ok {
+			body.LastFrameImage = v
 		}
 	}
 

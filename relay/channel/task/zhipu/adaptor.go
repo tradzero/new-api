@@ -51,6 +51,7 @@ type zhipuVideoRequest struct {
 	CompressionQuality string `json:"compression_quality,omitempty"`
 	GenerateAudio      *bool  `json:"generate_audio,omitempty"`
 	ServiceTier        string `json:"service_tier,omitempty"`
+	ExecutionExpiresAfter int    `json:"execution_expires_after,omitempty"`
 }
 
 type zhipuVideoSubmitResponse struct {

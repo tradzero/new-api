@@ -52,6 +52,9 @@ type zhipuVideoRequest struct {
 	GenerateAudio      *bool  `json:"generate_audio,omitempty"`
 	ServiceTier        string `json:"service_tier,omitempty"`
 	ExecutionExpiresAfter int    `json:"execution_expires_after,omitempty"`
+	Resolution         string `json:"resolution,omitempty"`
+	PromptOptimizer    *bool  `json:"prompt_optimizer,omitempty"`
+	FastPretreatment   *bool  `json:"fast_pretreatment,omitempty"`
 }
 
 type zhipuVideoSubmitResponse struct {
@@ -125,6 +128,29 @@ var pricingRegistry = map[string]PricingFunc{
 	// ModelPrice = offline + no audio rate ($0.0006/kTokens)
 	// Actual billing adjusted by total_tokens on task completion
 	"doubao-seedance": pricingSeedance,
+
+	// Minimax-hailuo-2.3-Fast: ModelPrice = 768P/6s price
+	"minimax-hailuo-2.3-Fast": makePricingHailuo(map[string]float64{
+		"768P:6":  1.0,
+		"768P:10": 32.0 / 19.0, // $0.32/$0.19
+		"1080P:6": 33.0 / 19.0, // $0.33/$0.19
+	}),
+
+	// Minimax-hailuo-2.3: ModelPrice = 768P/6s price
+	"minimax-hailuo-2.3": makePricingHailuo(map[string]float64{
+		"768P:6":  1.0,
+		"768P:10": 2.0,  // $0.56/$0.28
+		"1080P:6": 1.75, // $0.49/$0.28
+	}),
+
+	// Minimax-hailuo-02: ModelPrice = 768P/6s price
+	"minimax-hailuo-02": makePricingHailuo(map[string]float64{
+		"512P:6":  10.0 / 28.0, // $0.10/$0.28
+		"512P:10": 15.0 / 28.0, // $0.15/$0.28
+		"768P:6":  1.0,
+		"768P:10": 2.0,  // $0.56/$0.28
+		"1080P:6": 1.75, // $0.49/$0.28
+	}),
 }
 
 // pricingPerSecond bills by duration only (default for cogvideox models).
@@ -237,6 +263,31 @@ func pricingSeedance(req *relaycommon.TaskSubmitReq) map[string]float64 {
 	}
 }
 
+// makePricingHailuo returns a PricingFunc for Minimax-Hailuo models.
+// ModelPrice should be set to the 768P/6s price in model configuration.
+// ratioTable maps "resolution:duration" keys to price ratios relative to ModelPrice.
+func makePricingHailuo(ratioTable map[string]float64) PricingFunc {
+	return func(req *relaycommon.TaskSubmitReq) map[string]float64 {
+		resolution := req.Resolution
+		if resolution == "" {
+			resolution = "768P"
+		}
+		duration := 6
+		if req.Duration > 0 {
+			duration = req.Duration
+		}
+		key := fmt.Sprintf("%s:%d", resolution, duration)
+		if ratio, ok := ratioTable[key]; ok {
+			return map[string]float64{
+				"price": ratio,
+			}
+		}
+		return map[string]float64{
+			"price": 1.0,
+		}
+	}
+}
+
 // getPricingFunc returns the PricingFunc for a given model name.
 // It first tries exact match, then prefix match (longest prefix wins).
 func getPricingFunc(modelName string) PricingFunc {
@@ -271,6 +322,7 @@ var (
 		"veo-3.0-generate-001", "veo-3.0-fast-generate-001",
 		"veo-3.1-generate-preview", "veo-3.1-fast-generate-preview",
 		"doubao-seedance",
+		"minimax-hailuo",
 	}
 	ChannelName = "zhipu_video"
 
@@ -499,6 +551,11 @@ func (a *TaskAdaptor) convertToRequestPayload(req *relaycommon.TaskSubmitReq) *z
 		Seed:               req.Seed,
 		ResizeMode:         req.ResizeMode,
 		CompressionQuality: req.CompressionQuality,
+		FirstFrameImage:    req.FirstFrameImage,
+		LastFrameImage:     req.LastFrameImage,
+		Resolution:         req.Resolution,
+		PromptOptimizer:    req.PromptOptimizer,
+		FastPretreatment:   req.FastPretreatment,
 	}
 
 	if body.Model == "" {
@@ -553,11 +610,15 @@ func (a *TaskAdaptor) convertToRequestPayload(req *relaycommon.TaskSubmitReq) *z
 		if v, ok := req.Metadata["user_id"].(string); ok {
 			body.UserID = v
 		}
-		if v, ok := req.Metadata["first_frame_image"].(string); ok {
-			body.FirstFrameImage = v
+		if body.FirstFrameImage == "" {
+			if v, ok := req.Metadata["first_frame_image"].(string); ok {
+				body.FirstFrameImage = v
+			}
 		}
-		if v, ok := req.Metadata["last_frame_image"].(string); ok {
-			body.LastFrameImage = v
+		if body.LastFrameImage == "" {
+			if v, ok := req.Metadata["last_frame_image"].(string); ok {
+				body.LastFrameImage = v
+			}
 		}
 	}
 

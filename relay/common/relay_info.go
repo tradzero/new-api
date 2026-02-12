@@ -635,6 +635,11 @@ type TaskSubmitReq struct {
 	ServiceTier        string `json:"service_tier,omitempty"`
 	RequestID          string `json:"request_id,omitempty"`
 	ImageURL           any    `json:"image_url,omitempty"`
+	FirstFrameImage    string `json:"first_frame_image,omitempty"`
+	LastFrameImage     string `json:"last_frame_image,omitempty"`
+	Resolution         string `json:"resolution,omitempty"`
+	PromptOptimizer    *bool  `json:"prompt_optimizer,omitempty"`
+	FastPretreatment   *bool  `json:"fast_pretreatment,omitempty"`
 }
 
 func (t *TaskSubmitReq) GetPrompt() string {

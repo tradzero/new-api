@@ -69,6 +69,11 @@ type zhipuVideoFetchResponse struct {
 	Model       string                 `json:"model"`
 	TaskStatus  string                 `json:"task_status"`
 	VideoResult []zhipuVideoResultItem `json:"video_result"`
+	Usage       struct {
+		PromptTokens     int `json:"prompt_tokens"`
+		CompletionTokens int `json:"completion_tokens"`
+		TotalTokens      int `json:"total_tokens"`
+	} `json:"usage"`
 }
 
 // ============================
@@ -111,6 +116,10 @@ var pricingRegistry = map[string]PricingFunc{
 	// Kling turbo: per-5s + mode multiplier (pro=5/3x)
 	// ModelPrice = std/5s price
 	"kling-v2-5-turbo": makePricingKling(5.0 / 3.0),
+
+	// Seedance family: token-based billing (no OtherRatios needed)
+	// Use model ratio config, actual billing adjusted by total_tokens on task completion
+	"doubao-seedance": pricingTokenBased,
 }
 
 // pricingPerSecond bills by duration only (default for cogvideox models).
@@ -201,6 +210,12 @@ func pricingKlingMaster(req *relaycommon.TaskSubmitReq) map[string]float64 {
 	}
 }
 
+// pricingTokenBased returns empty OtherRatios for token-based billing models.
+// Pre-consumption uses ModelPrice only; actual billing is adjusted by total_tokens on task completion.
+func pricingTokenBased(req *relaycommon.TaskSubmitReq) map[string]float64 {
+	return nil
+}
+
 // getPricingFunc returns the PricingFunc for a given model name.
 // It first tries exact match, then prefix match (longest prefix wins).
 func getPricingFunc(modelName string) PricingFunc {
@@ -234,6 +249,7 @@ var (
 		"sora-2", "sora-2-pro",
 		"veo-3.0-generate-001", "veo-3.0-fast-generate-001",
 		"veo-3.1-generate-preview", "veo-3.1-fast-generate-preview",
+		"doubao-seedance",
 	}
 	ChannelName = "zhipu_video"
 
@@ -395,6 +411,11 @@ func (a *TaskAdaptor) ParseTaskResult(respBody []byte) (*relaycommon.TaskInfo, e
 		taskInfo.Progress = "100%"
 		if len(zResp.VideoResult) > 0 {
 			taskInfo.Url = zResp.VideoResult[0].URL
+		}
+		// Extract usage for token-based billing (e.g. seedance models)
+		if zResp.Usage.TotalTokens > 0 {
+			taskInfo.CompletionTokens = zResp.Usage.CompletionTokens
+			taskInfo.TotalTokens = zResp.Usage.TotalTokens
 		}
 	case "FAIL":
 		taskInfo.Status = model.TaskStatusFailure

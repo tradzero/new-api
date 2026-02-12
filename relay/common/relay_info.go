@@ -611,6 +611,7 @@ type TaskRelayInfo struct {
 
 type TaskSubmitReq struct {
 	Prompt         string                 `json:"prompt"`
+	Content        any                    `json:"content,omitempty"`
 	Model          string                 `json:"model,omitempty"`
 	Mode           string                 `json:"mode,omitempty"`
 	Image          string                 `json:"image,omitempty"`
@@ -630,6 +631,8 @@ type TaskSubmitReq struct {
 	ResizeMode         string `json:"resize_mode,omitempty"`
 	CompressionQuality string `json:"compression_quality,omitempty"`
 	WithAudio          *bool  `json:"with_audio,omitempty"`
+	GenerateAudio      *bool  `json:"generate_audio,omitempty"`
+	ServiceTier        string `json:"service_tier,omitempty"`
 	RequestID          string `json:"request_id,omitempty"`
 	ImageURL           any    `json:"image_url,omitempty"`
 }

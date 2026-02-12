@@ -27,6 +27,7 @@ import (
 type zhipuVideoRequest struct {
 	Model            string `json:"model"`
 	Prompt           string `json:"prompt,omitempty"`
+	Content          any    `json:"content,omitempty"`
 	// Mode             string `json:"mode,omitempty"`
 	ImageURL         any    `json:"image_url,omitempty"`
 	Quality          string `json:"quality,omitempty"`
@@ -48,6 +49,8 @@ type zhipuVideoRequest struct {
 	Seed               int    `json:"seed,omitempty"`
 	ResizeMode         string `json:"resize_mode,omitempty"`
 	CompressionQuality string `json:"compression_quality,omitempty"`
+	GenerateAudio      *bool  `json:"generate_audio,omitempty"`
+	ServiceTier        string `json:"service_tier,omitempty"`
 }
 
 type zhipuVideoSubmitResponse struct {
@@ -117,9 +120,10 @@ var pricingRegistry = map[string]PricingFunc{
 	// ModelPrice = std/5s price
 	"kling-v2-5-turbo": makePricingKling(5.0 / 3.0),
 
-	// Seedance family: token-based billing (no OtherRatios needed)
-	// Use model ratio config, actual billing adjusted by total_tokens on task completion
-	"doubao-seedance": pricingTokenBased,
+	// Seedance family: token-based billing with service_tier and audio multipliers
+	// ModelPrice = offline + no audio rate ($0.0006/kTokens)
+	// Actual billing adjusted by total_tokens on task completion
+	"doubao-seedance": pricingSeedance,
 }
 
 // pricingPerSecond bills by duration only (default for cogvideox models).
@@ -210,10 +214,26 @@ func pricingKlingMaster(req *relaycommon.TaskSubmitReq) map[string]float64 {
 	}
 }
 
-// pricingTokenBased returns empty OtherRatios for token-based billing models.
-// Pre-consumption uses ModelPrice only; actual billing is adjusted by total_tokens on task completion.
-func pricingTokenBased(req *relaycommon.TaskSubmitReq) map[string]float64 {
-	return nil
+// pricingSeedance handles billing for seedance models.
+// Two independent multipliers:
+//   - service_tier: "default"(online)=2x, "flex"(offline)=1x
+//   - generate_audio: true=2x, false=1x
+//
+// ModelPrice should be set to the base rate (offline + no audio).
+// Actual billing is adjusted by total_tokens on task completion.
+func pricingSeedance(req *relaycommon.TaskSubmitReq) map[string]float64 {
+	serviceRatio := 2.0 // default = online
+	if req.ServiceTier == "flex" {
+		serviceRatio = 1.0
+	}
+	audioRatio := 1.0
+	if req.GenerateAudio != nil && *req.GenerateAudio {
+		audioRatio = 2.0
+	}
+	return map[string]float64{
+		"service_tier": serviceRatio,
+		"audio":        audioRatio,
+	}
 }
 
 // getPricingFunc returns the PricingFunc for a given model name.
@@ -467,8 +487,9 @@ func (a *TaskAdaptor) ConvertToOpenAIVideo(originTask *model.Task) ([]byte, erro
 func (a *TaskAdaptor) convertToRequestPayload(req *relaycommon.TaskSubmitReq) *zhipuVideoRequest {
 	body := &zhipuVideoRequest{
 		Model:              req.Model,
-		Prompt:             req.Prompt,
 		WithAudio:          req.WithAudio,
+		GenerateAudio:      req.GenerateAudio,
+		ServiceTier:        req.ServiceTier,
 		RequestID:          req.RequestID,
 		AspectRatio:        req.AspectRatio,
 		NegativePrompt:     req.NegativePrompt,
@@ -483,15 +504,23 @@ func (a *TaskAdaptor) convertToRequestPayload(req *relaycommon.TaskSubmitReq) *z
 		body.Model = "cogvideox-3"
 	}
 
-	// Handle image input: prefer image_url (direct passthrough), fallback to images/image
-	if req.ImageURL != nil {
-		body.ImageURL = req.ImageURL
-	} else if len(req.Images) > 1 {
-		body.ImageURL = req.Images
-	} else if len(req.Images) == 1 {
-		body.ImageURL = req.Images[0]
-	} else if req.Image != "" {
-		body.ImageURL = req.Image
+	// Content array format (seedance): text + image_url objects in one array
+	// Prompt + image format (cogvideox, veo, sora, etc.): separate fields
+	if req.Content != nil {
+		body.Content = req.Content
+	} else {
+		body.Prompt = req.Prompt
+
+		// Handle image input: prefer image_url (direct passthrough), fallback to images/image
+		if req.ImageURL != nil {
+			body.ImageURL = req.ImageURL
+		} else if len(req.Images) > 1 {
+			body.ImageURL = req.Images
+		} else if len(req.Images) == 1 {
+			body.ImageURL = req.Images[0]
+		} else if req.Image != "" {
+			body.ImageURL = req.Image
+		}
 	}
 
 	// Handle size

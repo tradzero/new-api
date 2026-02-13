@@ -61,6 +61,9 @@ type zhipuVideoRequest struct {
 	ElementList        any    `json:"element_list,omitempty"`
 	Sound              string `json:"sound,omitempty"`
 	VoiceList          any    `json:"voice_list,omitempty"`
+	VideoURL           string `json:"video_url,omitempty"`
+	KeepOriginalSound  string `json:"keep_original_sound,omitempty"`
+	CharacterOrientation string `json:"character_orientation,omitempty"`
 }
 
 type zhipuVideoSubmitResponse struct {
@@ -165,6 +168,10 @@ var pricingRegistry = map[string]PricingFunc{
 	// Kling V2.6: ModelPrice = pro/5s/no sound/no voice price
 	// duration: 5s=1.0, 10s=2.0; sound: off=1.0, on=2.0; voice: no=1.0, yes=1.2
 	"kling-v2-6": pricingKlingV26,
+
+	// Kling V2.6 Motion Control: ModelPrice = std per second price
+	// seconds: duration; mode: std=1.0, pro=1.6
+	"kling-v2-6-motion-control": pricingKlingV26MC,
 }
 
 // pricingPerSecond bills by duration only (default for cogvideox models).
@@ -354,6 +361,24 @@ func pricingKlingV26(req *relaycommon.TaskSubmitReq) map[string]float64 {
 	}
 }
 
+// pricingKlingV26MC bills per second with mode multiplier for V2.6 motion control.
+// ModelPrice = std per second price.
+// seconds: duration; mode: std=1.0, pro=1.6
+func pricingKlingV26MC(req *relaycommon.TaskSubmitReq) map[string]float64 {
+	duration := 5.0
+	if req.Duration > 0 {
+		duration = float64(req.Duration)
+	}
+	modeRatio := 1.0
+	if strings.EqualFold(req.Mode, "pro") {
+		modeRatio = 1.6
+	}
+	return map[string]float64{
+		"seconds": duration,
+		"mode":    modeRatio,
+	}
+}
+
 // getPricingFunc returns the PricingFunc for a given model name.
 // It first tries exact match, then prefix match (longest prefix wins).
 func getPricingFunc(modelName string) PricingFunc {
@@ -391,6 +416,7 @@ var (
 		"minimax-hailuo",
 		"kling-video-o1",
 		"kling-v2-6",
+		"kling-v2-6-motion-control",
 	}
 	ChannelName = "zhipu_video"
 
@@ -632,6 +658,9 @@ func (a *TaskAdaptor) convertToRequestPayload(req *relaycommon.TaskSubmitReq) *z
 		ElementList:        req.ElementList,
 		Sound:              req.Sound,
 		VoiceList:          req.VoiceList,
+		VideoURL:           req.VideoURL,
+		KeepOriginalSound:  req.KeepOriginalSound,
+		CharacterOrientation: req.CharacterOrientation,
 	}
 
 	if body.Model == "" {

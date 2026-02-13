@@ -647,6 +647,9 @@ type TaskSubmitReq struct {
 	ElementList        any    `json:"element_list,omitempty"`
 	Sound              string `json:"sound,omitempty"`
 	VoiceList          any    `json:"voice_list,omitempty"`
+	VideoURL           string `json:"video_url,omitempty"`
+	KeepOriginalSound  string `json:"keep_original_sound,omitempty"`
+	CharacterOrientation string `json:"character_orientation,omitempty"`
 }
 
 func (t *TaskSubmitReq) GetPrompt() string {

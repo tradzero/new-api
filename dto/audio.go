@@ -18,11 +18,20 @@ type AudioRequest struct {
 	Speed          float64         `json:"speed,omitempty"`
 	StreamFormat   string          `json:"stream_format,omitempty"`
 	Metadata       json.RawMessage `json:"metadata,omitempty"`
+	// Kling TTS native fields
+	Text          string  `json:"text,omitempty"`
+	VoiceID       string  `json:"voice_id,omitempty"`
+	VoiceLanguage string  `json:"voice_language,omitempty"`
+	VoiceSpeed    float64 `json:"voice_speed,omitempty"`
 }
 
 func (r *AudioRequest) GetTokenCountMeta() *types.TokenCountMeta {
+	text := r.Input
+	if text == "" {
+		text = r.Text
+	}
 	meta := &types.TokenCountMeta{
-		CombineText: r.Input,
+		CombineText: text,
 		TokenType:   types.TokenTypeTextNumber,
 	}
 	if strings.Contains(r.Model, "gpt") {

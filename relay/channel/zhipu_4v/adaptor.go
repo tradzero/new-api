@@ -1,6 +1,7 @@
 package zhipu_4v
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -33,8 +34,36 @@ func (a *Adaptor) ConvertClaudeRequest(c *gin.Context, info *relaycommon.RelayIn
 }
 
 func (a *Adaptor) ConvertAudioRequest(c *gin.Context, info *relaycommon.RelayInfo, request dto.AudioRequest) (io.Reader, error) {
-	//TODO implement me
-	return nil, errors.New("not implemented")
+	klingReq := map[string]any{
+		"model": request.Model,
+	}
+	// text: prefer Text (Kling native), fallback to Input (OpenAI compat)
+	if request.Text != "" {
+		klingReq["text"] = request.Text
+	} else {
+		klingReq["text"] = request.Input
+	}
+	// voice_id: prefer VoiceID (Kling native), fallback to Voice (OpenAI compat)
+	if request.VoiceID != "" {
+		klingReq["voice_id"] = request.VoiceID
+	} else if request.Voice != "" {
+		klingReq["voice_id"] = request.Voice
+	}
+	// voice_language
+	if request.VoiceLanguage != "" {
+		klingReq["voice_language"] = request.VoiceLanguage
+	}
+	// voice_speed: prefer VoiceSpeed (Kling native), fallback to Speed (OpenAI compat)
+	if request.VoiceSpeed > 0 {
+		klingReq["voice_speed"] = request.VoiceSpeed
+	} else if request.Speed > 0 {
+		klingReq["voice_speed"] = request.Speed
+	}
+	data, err := json.Marshal(klingReq)
+	if err != nil {
+		return nil, err
+	}
+	return bytes.NewReader(data), nil
 }
 
 func (a *Adaptor) ConvertImageRequest(c *gin.Context, info *relaycommon.RelayInfo, request dto.ImageRequest) (any, error) {
@@ -92,6 +121,8 @@ func (a *Adaptor) GetRequestURL(info *relaycommon.RelayInfo) (string, error) {
 		return fmt.Sprintf("%s/api/anthropic/v1/messages", baseURL), nil
 	default:
 		switch info.RelayMode {
+		case relayconstant.RelayModeAudioSpeech:
+			return fmt.Sprintf("%s/api/paas/v4/audio/tts", baseURL), nil
 		case relayconstant.RelayModeEmbeddings:
 			if hasSpecialPlan && specialPlan.OpenAIBaseURL != "" {
 				return fmt.Sprintf("%s/embeddings", specialPlan.OpenAIBaseURL), nil
@@ -147,6 +178,9 @@ func (a *Adaptor) DoResponse(c *gin.Context, resp *http.Response, info *relaycom
 		adaptor := claude.Adaptor{}
 		return adaptor.DoResponse(c, resp, info)
 	default:
+		if info.RelayMode == relayconstant.RelayModeAudioSpeech {
+			return zhipu4vTTSHandler(c, resp, info)
+		}
 		if info.RelayMode == relayconstant.RelayModeImagesGenerations {
 			return zhipu4vImageHandler(c, resp, info)
 		}
@@ -161,4 +195,22 @@ func (a *Adaptor) GetModelList() []string {
 
 func (a *Adaptor) GetChannelName() string {
 	return ChannelName
+}
+
+func zhipu4vTTSHandler(c *gin.Context, resp *http.Response, info *relaycommon.RelayInfo) (*dto.Usage, *types.NewAPIError) {
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, types.NewOpenAIError(err, types.ErrorCodeReadResponseBodyFailed, http.StatusInternalServerError)
+	}
+	defer resp.Body.Close()
+
+	// Forward JSON response as-is to client
+	c.Writer.Header().Set("Content-Type", "application/json")
+	c.Writer.WriteHeader(resp.StatusCode)
+	_, _ = c.Writer.Write(responseBody)
+
+	usage := &dto.Usage{}
+	usage.PromptTokens = info.GetEstimatePromptTokens()
+	usage.TotalTokens = usage.PromptTokens
+	return usage, nil
 }

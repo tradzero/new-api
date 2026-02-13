@@ -640,6 +640,8 @@ type TaskSubmitReq struct {
 	Resolution         string `json:"resolution,omitempty"`
 	PromptOptimizer    *bool  `json:"prompt_optimizer,omitempty"`
 	FastPretreatment   *bool  `json:"fast_pretreatment,omitempty"`
+	Quality            string `json:"quality,omitempty"`
+	FPS                int    `json:"fps,omitempty"`
 }
 
 func (t *TaskSubmitReq) GetPrompt() string {

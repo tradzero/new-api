@@ -556,6 +556,8 @@ func (a *TaskAdaptor) convertToRequestPayload(req *relaycommon.TaskSubmitReq) *z
 		Resolution:         req.Resolution,
 		PromptOptimizer:    req.PromptOptimizer,
 		FastPretreatment:   req.FastPretreatment,
+		Quality:            req.Quality,
+		FPS:                req.FPS,
 	}
 
 	if body.Model == "" {
@@ -591,20 +593,24 @@ func (a *TaskAdaptor) convertToRequestPayload(req *relaycommon.TaskSubmitReq) *z
 		body.Duration = req.Duration
 	}
 
-	// Apply metadata overrides (quality, watermark_enabled, fps, user_id)
+	// Apply metadata fallbacks (quality, watermark_enabled, fps, user_id)
 	if req.Metadata != nil {
-		if v, ok := req.Metadata["quality"].(string); ok {
-			body.Quality = v
+		if body.Quality == "" {
+			if v, ok := req.Metadata["quality"].(string); ok {
+				body.Quality = v
+			}
 		}
 		if v, ok := req.Metadata["watermark_enabled"].(bool); ok {
 			body.WatermarkEnabled = &v
 		}
-		if v, ok := req.Metadata["fps"]; ok {
-			switch fv := v.(type) {
-			case float64:
-				body.FPS = int(fv)
-			case int:
-				body.FPS = fv
+		if body.FPS == 0 {
+			if v, ok := req.Metadata["fps"]; ok {
+				switch fv := v.(type) {
+				case float64:
+					body.FPS = int(fv)
+				case int:
+					body.FPS = fv
+				}
 			}
 		}
 		if v, ok := req.Metadata["user_id"].(string); ok {

@@ -59,6 +59,8 @@ type zhipuVideoRequest struct {
 	VideoList          any    `json:"video_list,omitempty"`
 	ImageList          any    `json:"image_list,omitempty"`
 	ElementList        any    `json:"element_list,omitempty"`
+	Sound              string `json:"sound,omitempty"`
+	VoiceList          any    `json:"voice_list,omitempty"`
 }
 
 type zhipuVideoSubmitResponse struct {
@@ -159,6 +161,10 @@ var pricingRegistry = map[string]PricingFunc{
 	// Kling-video-o1: ModelPrice = std + no reference video price
 	// mode: std=1.0, pro=4/3; video_ref: no=1.0, yes=1.5
 	"kling-video-o1": pricingKlingO1,
+
+	// Kling V2.6: ModelPrice = pro/5s/no sound/no voice price
+	// duration: 5s=1.0, 10s=2.0; sound: off=1.0, on=2.0; voice: no=1.0, yes=1.2
+	"kling-v2-6": pricingKlingV26,
 }
 
 // pricingPerSecond bills by duration only (default for cogvideox models).
@@ -325,6 +331,29 @@ func hasVideoList(v any) bool {
 	return false
 }
 
+// pricingKlingV26 bills by duration, sound, and voice.
+// ModelPrice = pro/5s/no sound/no voice price.
+// duration: 5s=1.0, 10s=2.0; sound: off=1.0, on=2.0; voice: no=1.0, yes=1.2
+func pricingKlingV26(req *relaycommon.TaskSubmitReq) map[string]float64 {
+	durationRatio := 1.0
+	if req.Duration >= 10 {
+		durationRatio = 2.0
+	}
+	soundRatio := 1.0
+	if strings.EqualFold(req.Sound, "on") {
+		soundRatio = 2.0
+	}
+	voiceRatio := 1.0
+	if req.VoiceList != nil {
+		voiceRatio = 1.2
+	}
+	return map[string]float64{
+		"duration": durationRatio,
+		"sound":    soundRatio,
+		"voice":    voiceRatio,
+	}
+}
+
 // getPricingFunc returns the PricingFunc for a given model name.
 // It first tries exact match, then prefix match (longest prefix wins).
 func getPricingFunc(modelName string) PricingFunc {
@@ -361,6 +390,7 @@ var (
 		"doubao-seedance",
 		"minimax-hailuo",
 		"kling-video-o1",
+		"kling-v2-6",
 	}
 	ChannelName = "zhipu_video"
 
@@ -600,6 +630,8 @@ func (a *TaskAdaptor) convertToRequestPayload(req *relaycommon.TaskSubmitReq) *z
 		VideoList:          req.VideoList,
 		ImageList:          req.ImageList,
 		ElementList:        req.ElementList,
+		Sound:              req.Sound,
+		VoiceList:          req.VoiceList,
 	}
 
 	if body.Model == "" {

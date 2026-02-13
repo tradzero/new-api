@@ -642,6 +642,9 @@ type TaskSubmitReq struct {
 	FastPretreatment   *bool  `json:"fast_pretreatment,omitempty"`
 	Quality            string `json:"quality,omitempty"`
 	FPS                int    `json:"fps,omitempty"`
+	VideoList          any    `json:"video_list,omitempty"`
+	ImageList          any    `json:"image_list,omitempty"`
+	ElementList        any    `json:"element_list,omitempty"`
 }
 
 func (t *TaskSubmitReq) GetPrompt() string {

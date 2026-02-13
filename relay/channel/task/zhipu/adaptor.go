@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
@@ -28,7 +29,7 @@ type zhipuVideoRequest struct {
 	Model            string `json:"model"`
 	Prompt           string `json:"prompt,omitempty"`
 	Content          any    `json:"content,omitempty"`
-	// Mode             string `json:"mode,omitempty"`
+	Mode             string `json:"mode,omitempty"`
 	ImageURL         any    `json:"image_url,omitempty"`
 	Quality          string `json:"quality,omitempty"`
 	WithAudio        *bool  `json:"with_audio,omitempty"`
@@ -55,6 +56,9 @@ type zhipuVideoRequest struct {
 	Resolution         string `json:"resolution,omitempty"`
 	PromptOptimizer    *bool  `json:"prompt_optimizer,omitempty"`
 	FastPretreatment   *bool  `json:"fast_pretreatment,omitempty"`
+	VideoList          any    `json:"video_list,omitempty"`
+	ImageList          any    `json:"image_list,omitempty"`
+	ElementList        any    `json:"element_list,omitempty"`
 }
 
 type zhipuVideoSubmitResponse struct {
@@ -151,6 +155,10 @@ var pricingRegistry = map[string]PricingFunc{
 		"768P:10": 2.0,  // $0.56/$0.28
 		"1080P:6": 1.75, // $0.49/$0.28
 	}),
+
+	// Kling-video-o1: ModelPrice = std + no reference video price
+	// mode: std=1.0, pro=4/3; video_ref: no=1.0, yes=1.5
+	"kling-video-o1": pricingKlingO1,
 }
 
 // pricingPerSecond bills by duration only (default for cogvideox models).
@@ -288,6 +296,35 @@ func makePricingHailuo(ratioTable map[string]float64) PricingFunc {
 	}
 }
 
+// pricingKlingO1 bills by mode (std/pro) and whether video_list is present.
+// ModelPrice = std + no reference video price.
+// mode: std=1.0, pro=4/3; video_ref: no=1.0, yes=1.5
+func pricingKlingO1(req *relaycommon.TaskSubmitReq) map[string]float64 {
+	modeRatio := 1.0
+	if strings.EqualFold(req.Mode, "pro") {
+		modeRatio = 4.0 / 3.0
+	}
+	videoRefRatio := 1.0
+	if hasVideoList(req.VideoList) {
+		videoRefRatio = 1.5
+	}
+	return map[string]float64{
+		"mode":      modeRatio,
+		"video_ref": videoRefRatio,
+	}
+}
+
+// hasVideoList checks whether the video_list field contains at least one item.
+func hasVideoList(v any) bool {
+	if v == nil {
+		return false
+	}
+	if vl, ok := v.([]any); ok {
+		return len(vl) > 0
+	}
+	return false
+}
+
 // getPricingFunc returns the PricingFunc for a given model name.
 // It first tries exact match, then prefix match (longest prefix wins).
 func getPricingFunc(modelName string) PricingFunc {
@@ -323,6 +360,7 @@ var (
 		"veo-3.1-generate-preview", "veo-3.1-fast-generate-preview",
 		"doubao-seedance",
 		"minimax-hailuo",
+		"kling-video-o1",
 	}
 	ChannelName = "zhipu_video"
 
@@ -558,6 +596,10 @@ func (a *TaskAdaptor) convertToRequestPayload(req *relaycommon.TaskSubmitReq) *z
 		FastPretreatment:   req.FastPretreatment,
 		Quality:            req.Quality,
 		FPS:                req.FPS,
+		Mode:               req.Mode,
+		VideoList:          req.VideoList,
+		ImageList:          req.ImageList,
+		ElementList:        req.ElementList,
 	}
 
 	if body.Model == "" {

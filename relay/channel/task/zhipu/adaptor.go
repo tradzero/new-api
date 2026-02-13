@@ -16,6 +16,7 @@ import (
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/relay/channel"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
+	relayconstant "github.com/QuantumNous/new-api/relay/constant"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -64,6 +65,8 @@ type zhipuVideoRequest struct {
 	VideoURL           string `json:"video_url,omitempty"`
 	KeepOriginalSound  string `json:"keep_original_sound,omitempty"`
 	CharacterOrientation string `json:"character_orientation,omitempty"`
+	VoiceName          string `json:"voice_name,omitempty"`
+	VoiceURL           string `json:"voice_url,omitempty"`
 }
 
 type zhipuVideoSubmitResponse struct {
@@ -172,6 +175,9 @@ var pricingRegistry = map[string]PricingFunc{
 	// Kling V2.6 Motion Control: ModelPrice = std per second price
 	// seconds: duration; mode: std=1.0, pro=1.6
 	"kling-v2-6-motion-control": pricingKlingV26MC,
+
+	// Kling custom voice: flat per-use pricing, ModelPrice = per-use price
+	"kling-custom-voice": pricingFlat,
 }
 
 // pricingPerSecond bills by duration only (default for cogvideox models).
@@ -379,6 +385,11 @@ func pricingKlingV26MC(req *relaycommon.TaskSubmitReq) map[string]float64 {
 	}
 }
 
+// pricingFlat is for flat per-use billing with no additional multipliers.
+func pricingFlat(_ *relaycommon.TaskSubmitReq) map[string]float64 {
+	return map[string]float64{}
+}
+
 // getPricingFunc returns the PricingFunc for a given model name.
 // It first tries exact match, then prefix match (longest prefix wins).
 func getPricingFunc(modelName string) PricingFunc {
@@ -417,11 +428,13 @@ var (
 		"kling-video-o1",
 		"kling-v2-6",
 		"kling-v2-6-motion-control",
+		"kling-custom-voice",
 	}
 	ChannelName = "zhipu_video"
 
-	submitEndpoint = "/api/paas/v4/videos/generations"
-	fetchEndpoint  = "/api/paas/v4/async-result"
+	submitEndpoint      = "/api/paas/v4/videos/generations"
+	audioSubmitEndpoint = "/api/paas/v4/async/audios/generations"
+	fetchEndpoint       = "/api/paas/v4/async-result"
 )
 
 type TaskAdaptor struct {
@@ -459,7 +472,11 @@ func (a *TaskAdaptor) ValidateRequestAndSetAction(c *gin.Context, info *relaycom
 }
 
 func (a *TaskAdaptor) BuildRequestURL(info *relaycommon.RelayInfo) (string, error) {
-	return fmt.Sprintf("%s%s", a.baseURL, submitEndpoint), nil
+	endpoint := submitEndpoint
+	if info.RelayMode == relayconstant.RelayModeAudioTaskSubmit {
+		endpoint = audioSubmitEndpoint
+	}
+	return fmt.Sprintf("%s%s", a.baseURL, endpoint), nil
 }
 
 func (a *TaskAdaptor) BuildRequestHeader(c *gin.Context, req *http.Request, info *relaycommon.RelayInfo) error {
@@ -661,6 +678,8 @@ func (a *TaskAdaptor) convertToRequestPayload(req *relaycommon.TaskSubmitReq) *z
 		VideoURL:           req.VideoURL,
 		KeepOriginalSound:  req.KeepOriginalSound,
 		CharacterOrientation: req.CharacterOrientation,
+		VoiceName:            req.VoiceName,
+		VoiceURL:             req.VoiceURL,
 	}
 
 	if body.Model == "" {

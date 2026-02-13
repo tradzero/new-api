@@ -149,7 +149,9 @@ func ValidateMultipartDirect(c *gin.Context, info *RelayInfo) *dto.TaskError {
 		hasInputReference = true
 	}
 
-	if !(req.Content != nil && strings.HasPrefix(model, "doubao-seedance")) {
+	skipPrompt := (req.Content != nil && strings.HasPrefix(model, "doubao-seedance")) ||
+		strings.HasPrefix(model, "kling-custom-voice")
+	if !skipPrompt {
 		if taskErr := validatePrompt(prompt); taskErr != nil {
 			return taskErr
 		}
@@ -216,7 +218,9 @@ func ValidateBasicTaskRequest(c *gin.Context, info *RelayInfo, action string) *d
 		return createTaskError(err, "invalid_request", http.StatusBadRequest, true)
 	}
 
-	if !(req.Content != nil && strings.HasPrefix(req.Model, "doubao-seedance")) {
+	skipPrompt := (req.Content != nil && strings.HasPrefix(req.Model, "doubao-seedance")) ||
+		strings.HasPrefix(req.Model, "kling-custom-voice")
+	if !skipPrompt {
 		if taskErr := validatePrompt(req.Prompt); taskErr != nil {
 			return taskErr
 		}

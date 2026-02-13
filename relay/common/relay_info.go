@@ -650,6 +650,8 @@ type TaskSubmitReq struct {
 	VideoURL           string `json:"video_url,omitempty"`
 	KeepOriginalSound  string `json:"keep_original_sound,omitempty"`
 	CharacterOrientation string `json:"character_orientation,omitempty"`
+	VoiceName          string `json:"voice_name,omitempty"`
+	VoiceURL           string `json:"voice_url,omitempty"`
 }
 
 func (t *TaskSubmitReq) GetPrompt() string {

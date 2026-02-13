@@ -511,7 +511,7 @@ func RelayTask(c *gin.Context) {
 func taskRelayHandler(c *gin.Context, relayInfo *relaycommon.RelayInfo) *dto.TaskError {
 	var err *dto.TaskError
 	switch relayInfo.RelayMode {
-	case relayconstant.RelayModeSunoFetch, relayconstant.RelayModeSunoFetchByID, relayconstant.RelayModeVideoFetchByID:
+	case relayconstant.RelayModeSunoFetch, relayconstant.RelayModeSunoFetchByID, relayconstant.RelayModeVideoFetchByID, relayconstant.RelayModeAudioTaskFetchByID:
 		err = relay.RelayTaskFetch(c, relayInfo.RelayMode)
 	default:
 		err = relay.RelayTaskSubmit(c, relayInfo)

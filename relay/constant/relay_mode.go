@@ -43,6 +43,9 @@ const (
 	RelayModeVideoFetchByID
 	RelayModeVideoSubmit
 
+	RelayModeAudioTaskSubmit
+	RelayModeAudioTaskFetchByID
+
 	RelayModeRerank
 
 	RelayModeResponses

@@ -123,6 +123,8 @@ func (a *Adaptor) GetRequestURL(info *relaycommon.RelayInfo) (string, error) {
 		switch info.RelayMode {
 		case relayconstant.RelayModeAudioSpeech:
 			return fmt.Sprintf("%s/api/paas/v4/audio/tts", baseURL), nil
+		case relayconstant.RelayModeElementCreate:
+			return fmt.Sprintf("%s/api/paas/v4/images/custom-elements", baseURL), nil
 		case relayconstant.RelayModeEmbeddings:
 			if hasSpecialPlan && specialPlan.OpenAIBaseURL != "" {
 				return fmt.Sprintf("%s/embeddings", specialPlan.OpenAIBaseURL), nil
@@ -178,7 +180,7 @@ func (a *Adaptor) DoResponse(c *gin.Context, resp *http.Response, info *relaycom
 		adaptor := claude.Adaptor{}
 		return adaptor.DoResponse(c, resp, info)
 	default:
-		if info.RelayMode == relayconstant.RelayModeAudioSpeech {
+		if info.RelayMode == relayconstant.RelayModeAudioSpeech || info.RelayMode == relayconstant.RelayModeElementCreate {
 			return zhipu4vTTSHandler(c, resp, info)
 		}
 		if info.RelayMode == relayconstant.RelayModeImagesGenerations {

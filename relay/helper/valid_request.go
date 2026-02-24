@@ -45,6 +45,8 @@ func GetAndValidateRequest(c *gin.Context, format types.RelayFormat) (request dt
 		request, err = GetAndValidateRerankRequest(c)
 	case types.RelayFormatOpenAIAudio:
 		request, err = GetAndValidAudioRequest(c, relayMode)
+	case types.RelayFormatElement:
+		request, err = GetAndValidateElementRequest(c)
 	case types.RelayFormatOpenAIRealtime:
 		request = &dto.BaseRequest{}
 	default:
@@ -335,6 +337,18 @@ func GetAndValidateGeminiBatchEmbeddingRequest(c *gin.Context) (*dto.GeminiBatch
 	err := common.UnmarshalBodyReusable(c, request)
 	if err != nil {
 		return nil, err
+	}
+	return request, nil
+}
+
+func GetAndValidateElementRequest(c *gin.Context) (*dto.ElementRequest, error) {
+	request := &dto.ElementRequest{}
+	err := common.UnmarshalBodyReusable(c, request)
+	if err != nil {
+		return nil, err
+	}
+	if request.Model == "" {
+		return nil, errors.New("model is required")
 	}
 	return request, nil
 }

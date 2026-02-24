@@ -16,4 +16,6 @@ const (
 
 	RelayFormatTask    = "task"
 	RelayFormatMjProxy = "mj_proxy"
+
+	RelayFormatElement = "element"
 )

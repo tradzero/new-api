@@ -85,6 +85,12 @@ type zhipuVideoResultItem struct {
 	CoverImageURL string `json:"cover_image_url"`
 }
 
+type zhipuAudioResultItem struct {
+	URL       string `json:"url"`
+	VoiceID   string `json:"voice_id"`
+	VoiceName string `json:"voice_name"`
+}
+
 type zhipuVideoFetchResponse struct {
 	ID          string                 `json:"id"`
 	RequestID   string                 `json:"request_id"`
@@ -92,6 +98,7 @@ type zhipuVideoFetchResponse struct {
 	Model       string                 `json:"model"`
 	TaskStatus  string                 `json:"task_status"`
 	VideoResult []zhipuVideoResultItem `json:"video_result"`
+	AudioResult []zhipuAudioResultItem `json:"audio_result"`
 	Usage       struct {
 		PromptTokens     int `json:"prompt_tokens"`
 		CompletionTokens int `json:"completion_tokens"`
@@ -600,6 +607,8 @@ func (a *TaskAdaptor) ParseTaskResult(respBody []byte) (*relaycommon.TaskInfo, e
 		taskInfo.Progress = "100%"
 		if len(zResp.VideoResult) > 0 {
 			taskInfo.Url = zResp.VideoResult[0].URL
+		} else if len(zResp.AudioResult) > 0 {
+			taskInfo.Url = zResp.AudioResult[0].URL
 		}
 		// Extract usage for token-based billing (e.g. seedance models)
 		if zResp.Usage.TotalTokens > 0 {
@@ -609,7 +618,7 @@ func (a *TaskAdaptor) ParseTaskResult(respBody []byte) (*relaycommon.TaskInfo, e
 	case "FAIL":
 		taskInfo.Status = model.TaskStatusFailure
 		taskInfo.Progress = "100%"
-		taskInfo.Reason = "zhipu video generation failed"
+		taskInfo.Reason = "zhipu task failed"
 	default:
 		taskInfo.Status = model.TaskStatusInProgress
 		taskInfo.Progress = "30%"

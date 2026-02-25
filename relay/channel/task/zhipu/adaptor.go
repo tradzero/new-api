@@ -71,6 +71,16 @@ type zhipuVideoRequest struct {
 	VoiceURL       string `json:"voice_url,omitempty"`
 	VideoID        string `json:"video_id,omitempty"`
 	CallbackConfig any    `json:"callback_config,omitempty"`
+	// Lip-sync params (kling-lip-sync)
+	SessionID           string   `json:"session_id,omitempty"`
+	FaceID              string   `json:"face_id,omitempty"`
+	AudioID             string   `json:"audio_id,omitempty"`
+	AudioURL            string   `json:"audio_url,omitempty"`
+	SoundStartTime      *int64   `json:"sound_start_time,omitempty"`
+	SoundEndTime        *int64   `json:"sound_end_time,omitempty"`
+	SoundInsertTime     *int64   `json:"sound_insert_time,omitempty"`
+	SoundVolume         *int64   `json:"sound_volume,omitempty"`
+	OriginalAudioVolume *float64 `json:"original_audio_volume,omitempty"`
 }
 
 type zhipuVideoSubmitResponse struct {
@@ -703,6 +713,15 @@ func (a *TaskAdaptor) convertToRequestPayload(req *relaycommon.TaskSubmitReq) *z
 		VoiceURL:            req.VoiceURL,
 		VideoID:             req.VideoID,
 		CallbackConfig:      req.CallbackConfig,
+		SessionID:           req.SessionID,
+		FaceID:              req.FaceID,
+		AudioID:             req.AudioID,
+		AudioURL:            req.AudioURL,
+		SoundStartTime:      req.SoundStartTime,
+		SoundEndTime:        req.SoundEndTime,
+		SoundInsertTime:     req.SoundInsertTime,
+		SoundVolume:         req.SoundVolume,
+		OriginalAudioVolume: req.OriginalAudioVolume,
 	}
 
 	if body.Model == "" {

@@ -702,6 +702,16 @@ type TaskSubmitReq struct {
 	VoiceURL       string `json:"voice_url,omitempty"`
 	VideoID        string `json:"video_id,omitempty"`
 	CallbackConfig any    `json:"callback_config,omitempty"`
+	// Lip-sync params (kling-lip-sync)
+	SessionID           string   `json:"session_id,omitempty"`
+	FaceID              string   `json:"face_id,omitempty"`
+	AudioID             string   `json:"audio_id,omitempty"`
+	AudioURL            string   `json:"audio_url,omitempty"`
+	SoundStartTime      *int64   `json:"sound_start_time,omitempty"`
+	SoundEndTime        *int64   `json:"sound_end_time,omitempty"`
+	SoundInsertTime     *int64   `json:"sound_insert_time,omitempty"`
+	SoundVolume         *int64   `json:"sound_volume,omitempty"`
+	OriginalAudioVolume *float64 `json:"original_audio_volume,omitempty"`
 }
 
 func (t *TaskSubmitReq) GetPrompt() string {

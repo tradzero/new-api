@@ -465,7 +465,11 @@ func (a *TaskAdaptor) Init(info *relaycommon.RelayInfo) {
 }
 
 func (a *TaskAdaptor) ValidateRequestAndSetAction(c *gin.Context, info *relaycommon.RelayInfo) (taskErr *dto.TaskError) {
-	taskErr = relaycommon.ValidateBasicTaskRequest(c, info, channelconstant.TaskActionGenerate)
+	action := channelconstant.TaskActionGenerate
+	if info.RelayMode == relayconstant.RelayModeAudioTaskSubmit {
+		action = channelconstant.TaskActionAudioGenerate
+	}
+	taskErr = relaycommon.ValidateBasicTaskRequest(c, info, action)
 	if taskErr != nil {
 		return
 	}
@@ -548,8 +552,8 @@ func (a *TaskAdaptor) DoResponse(c *gin.Context, resp *http.Response, info *rela
 	}
 
 	ov := dto.NewOpenAIVideo()
-	ov.ID = zResp.ID
-	ov.TaskID = zResp.ID
+	ov.ID = info.PublicTaskID
+	ov.TaskID = info.PublicTaskID
 	ov.CreatedAt = time.Now().Unix()
 	ov.Model = info.OriginModelName
 

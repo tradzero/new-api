@@ -40,6 +40,7 @@ import {
   TASK_ACTION_REFERENCE_GENERATE,
   TASK_ACTION_TEXT_GENERATE,
   TASK_ACTION_REMIX_GENERATE,
+  TASK_ACTION_AUDIO_GENERATE,
 } from '../../../constants/common.constant';
 import { CHANNEL_OPTIONS } from '../../../constants/channel.constants';
 import { stringToColor } from '../../../helpers/render';
@@ -132,6 +133,12 @@ const renderType = (type, t) => {
       return (
         <Tag color='blue' shape='circle' prefixIcon={<Sparkles size={14} />}>
           {t('视频Remix')}
+        </Tag>
+      );
+    case TASK_ACTION_AUDIO_GENERATE:
+      return (
+        <Tag color='cyan' shape='circle' prefixIcon={<Music size={14} />}>
+          {t('音频生成')}
         </Tag>
       );
     default:

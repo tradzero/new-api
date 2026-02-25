@@ -339,6 +339,9 @@ func getModelRequest(c *gin.Context) (*ModelRequest, bool, error) {
 	if strings.HasPrefix(c.Request.URL.Path, "/v1/elements") {
 		c.Set("relay_mode", relayconstant.RelayModeElementCreate)
 	}
+	if strings.HasPrefix(c.Request.URL.Path, "/v1/video/identify-face") {
+		c.Set("relay_mode", relayconstant.RelayModeIdentifyFace)
+	}
 	if strings.HasPrefix(c.Request.URL.Path, "/pg/chat/completions") {
 		// playground chat completions
 		req, err := getModelFromRequest(c)

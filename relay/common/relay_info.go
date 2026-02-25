@@ -412,6 +412,12 @@ func GenRelayInfoElement(c *gin.Context, request dto.Request) *RelayInfo {
 	return info
 }
 
+func GenRelayInfoIdentifyFace(c *gin.Context, request dto.Request) *RelayInfo {
+	info := genBaseRelayInfo(c, request)
+	info.RelayFormat = types.RelayFormatIdentifyFace
+	return info
+}
+
 func GenRelayInfoOpenAI(c *gin.Context, request dto.Request) *RelayInfo {
 	info := genBaseRelayInfo(c, request)
 	info.RelayFormat = types.RelayFormatOpenAI
@@ -511,6 +517,8 @@ func GenRelayInfo(c *gin.Context, relayFormat types.RelayFormat, request dto.Req
 		info = GenRelayInfoImage(c, request)
 	case types.RelayFormatElement:
 		info = GenRelayInfoElement(c, request)
+	case types.RelayFormatIdentifyFace:
+		info = GenRelayInfoIdentifyFace(c, request)
 	case types.RelayFormatOpenAIRealtime:
 		info = GenRelayInfoWs(c, ws)
 	case types.RelayFormatClaude:

@@ -132,6 +132,11 @@ func SetRelayRouter(router *gin.Engine) {
 			controller.Relay(c, types.RelayFormatElement)
 		})
 
+		// identify-face related routes
+		httpRouter.POST("/video/identify-face", func(c *gin.Context) {
+			controller.Relay(c, types.RelayFormatIdentifyFace)
+		})
+
 		// rerank related routes
 		httpRouter.POST("/rerank", func(c *gin.Context) {
 			controller.Relay(c, types.RelayFormatRerank)

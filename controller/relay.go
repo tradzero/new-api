@@ -47,6 +47,8 @@ func relayHandler(c *gin.Context, info *relaycommon.RelayInfo) *types.NewAPIErro
 		err = relay.EmbeddingHelper(c, info)
 	case relayconstant.RelayModeElementCreate:
 		err = relay.ElementHelper(c, info)
+	case relayconstant.RelayModeIdentifyFace:
+		err = relay.IdentifyFaceHelper(c, info)
 	case relayconstant.RelayModeResponses, relayconstant.RelayModeResponsesCompact:
 		err = relay.ResponsesHelper(c, info)
 	default:

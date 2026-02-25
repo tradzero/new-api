@@ -47,6 +47,8 @@ func GetAndValidateRequest(c *gin.Context, format types.RelayFormat) (request dt
 		request, err = GetAndValidAudioRequest(c, relayMode)
 	case types.RelayFormatElement:
 		request, err = GetAndValidateElementRequest(c)
+	case types.RelayFormatIdentifyFace:
+		request, err = GetAndValidateIdentifyFaceRequest(c)
 	case types.RelayFormatOpenAIRealtime:
 		request = &dto.BaseRequest{}
 	default:
@@ -349,6 +351,21 @@ func GetAndValidateElementRequest(c *gin.Context) (*dto.ElementRequest, error) {
 	}
 	if request.Model == "" {
 		return nil, errors.New("model is required")
+	}
+	return request, nil
+}
+
+func GetAndValidateIdentifyFaceRequest(c *gin.Context) (*dto.IdentifyFaceRequest, error) {
+	request := &dto.IdentifyFaceRequest{}
+	err := common.UnmarshalBodyReusable(c, request)
+	if err != nil {
+		return nil, err
+	}
+	if request.Model == "" {
+		return nil, errors.New("model is required")
+	}
+	if request.VideoID == "" && request.VideoURL == "" {
+		return nil, errors.New("video_id or video_url is required")
 	}
 	return request, nil
 }

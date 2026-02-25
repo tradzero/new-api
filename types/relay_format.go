@@ -18,4 +18,6 @@ const (
 	RelayFormatMjProxy = "mj_proxy"
 
 	RelayFormatElement = "element"
+
+	RelayFormatIdentifyFace = "identify_face"
 )

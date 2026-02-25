@@ -45,6 +45,9 @@ const (
 
 	RelayModeElementCreate
 
+	RelayModeAudioTaskSubmit
+	RelayModeAudioTaskFetchByID
+
 	RelayModeRerank
 
 	RelayModeResponses

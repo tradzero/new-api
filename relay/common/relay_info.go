@@ -689,6 +689,11 @@ type TaskSubmitReq struct {
 	VideoURL           string `json:"video_url,omitempty"`
 	KeepOriginalSound  string `json:"keep_original_sound,omitempty"`
 	CharacterOrientation string `json:"character_orientation,omitempty"`
+	// Async audio task params (kling-custom-voice)
+	VoiceName      string `json:"voice_name,omitempty"`
+	VoiceURL       string `json:"voice_url,omitempty"`
+	VideoID        string `json:"video_id,omitempty"`
+	CallbackConfig any    `json:"callback_config,omitempty"`
 }
 
 func (t *TaskSubmitReq) GetPrompt() string {

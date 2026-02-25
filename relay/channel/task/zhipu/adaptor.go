@@ -556,6 +556,9 @@ func (a *TaskAdaptor) DoResponse(c *gin.Context, resp *http.Response, info *rela
 	ov.TaskID = info.PublicTaskID
 	ov.CreatedAt = time.Now().Unix()
 	ov.Model = info.OriginModelName
+	if info.RelayMode == relayconstant.RelayModeAudioTaskSubmit {
+		ov.Object = "audio"
+	}
 
 	c.JSON(http.StatusOK, ov)
 	return zResp.ID, responseBody, nil

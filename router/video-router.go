@@ -28,11 +28,6 @@ func SetVideoRouter(router *gin.Engine) {
 		videoV1Router.POST("/videos", controller.RelayTask)
 		videoV1Router.GET("/videos/:task_id", controller.RelayTaskFetch)
 	}
-	// Async audio task routes (kling-custom-voice)
-	{
-		videoV1Router.POST("/audio/generations", controller.RelayTask)
-		videoV1Router.GET("/audio/generations/:task_id", controller.RelayTaskFetch)
-	}
 
 	klingV1Router := router.Group("/kling/v1")
 	klingV1Router.Use(middleware.KlingRequestConvert(), middleware.TokenAuth(), middleware.Distribute())

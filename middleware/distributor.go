@@ -216,21 +216,19 @@ func getModelRequest(c *gin.Context) (*ModelRequest, bool, error) {
 		}
 		c.Set("platform", string(constant.TaskPlatformSuno))
 		c.Set("relay_mode", relayMode)
-	} else if strings.Contains(c.Request.URL.Path, "/v1/audio/generations") {
-		relayMode := relayconstant.RelayModeUnknown
-		if c.Request.Method == http.MethodPost {
-			relayMode = relayconstant.RelayModeAudioTaskSubmit
-			req, err := getModelFromRequest(c)
-			if err != nil {
-				return nil, false, err
-			}
-			if req != nil {
-				modelRequest.Model = req.Model
-			}
-		} else if c.Request.Method == http.MethodGet {
-			relayMode = relayconstant.RelayModeAudioTaskFetchByID
-			shouldSelectChannel = false
+	} else if strings.Contains(c.Request.URL.Path, "/v1/audio/custom") {
+		relayMode := relayconstant.RelayModeAudioTaskSubmit
+		req, err := getModelFromRequest(c)
+		if err != nil {
+			return nil, false, err
 		}
+		if req != nil {
+			modelRequest.Model = req.Model
+		}
+		c.Set("relay_mode", relayMode)
+	} else if strings.Contains(c.Request.URL.Path, "/v1/audio/tasks/") {
+		relayMode := relayconstant.RelayModeAudioTaskFetchByID
+		shouldSelectChannel = false
 		c.Set("relay_mode", relayMode)
 	} else if strings.Contains(c.Request.URL.Path, "/v1/videos/") && strings.HasSuffix(c.Request.URL.Path, "/remix") {
 		relayMode := relayconstant.RelayModeVideoSubmit
@@ -314,7 +312,9 @@ func getModelRequest(c *gin.Context) (*ModelRequest, bool, error) {
 			}
 		}
 	}
-	if strings.HasPrefix(c.Request.URL.Path, "/v1/audio") && !strings.HasPrefix(c.Request.URL.Path, "/v1/audio/generations") {
+	if strings.HasPrefix(c.Request.URL.Path, "/v1/audio") &&
+		!strings.HasPrefix(c.Request.URL.Path, "/v1/audio/custom") &&
+		!strings.HasPrefix(c.Request.URL.Path, "/v1/audio/tasks") {
 		relayMode := relayconstant.RelayModeAudioSpeech
 		if strings.HasPrefix(c.Request.URL.Path, "/v1/audio/speech") {
 

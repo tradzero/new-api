@@ -211,7 +211,8 @@ func ValidateBasicTaskRequest(c *gin.Context, info *RelayInfo, action string) *d
 	}
 
 	if !(req.Content != nil && strings.HasPrefix(req.Model, "doubao-seedance")) &&
-		!strings.HasPrefix(req.Model, "kling-custom-voice") {
+		!strings.HasPrefix(req.Model, "kling-custom-voice") &&
+		req.Model != "kling-lip-sync" {
 		if taskErr := validatePrompt(req.Prompt); taskErr != nil {
 			return taskErr
 		}

@@ -149,7 +149,7 @@ func ValidateMultipartDirect(c *gin.Context, info *RelayInfo) *dto.TaskError {
 		hasInputReference = true
 	}
 
-	if !(req.Content != nil && strings.HasPrefix(model, "doubao-seedance")) {
+	if !(req.Content != nil && strings.HasPrefix(model, "doubao-seedance")) && model != "kling-lip-sync" {
 		if taskErr := validatePrompt(prompt); taskErr != nil {
 			return taskErr
 		}

@@ -64,13 +64,13 @@ func (i *ImageRequest) UnmarshalJSON(data []byte) error {
 
 	// Map sequential_image_generation_options.max_images to N for billing
 	// For zhipu 4v channel
-	if i.N == 0 {
+	if i.N == nil {
 		if val, ok := i.Extra["sequential_image_generation_options"]; ok {
 			var opts struct {
 				MaxImages uint `json:"max_images"`
 			}
 			if err := json.Unmarshal(val, &opts); err == nil && opts.MaxImages > 0 {
-				i.N = opts.MaxImages
+				i.N = &opts.MaxImages
 			}
 		}
 	}

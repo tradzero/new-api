@@ -185,8 +185,8 @@ func zhipu4vImageHandler(c *gin.Context, resp *http.Response, info *relaycommon.
 	if info.PriceData.UsePrice {
 		actualCount := len(payload.Data)
 		requestN := 0
-		if imageReq, ok := info.Request.(*dto.ImageRequest); ok && imageReq.N > 0 {
-			requestN = int(imageReq.N)
+		if imageReq, ok := info.Request.(*dto.ImageRequest); ok && imageReq.N != nil && *imageReq.N > 0 {
+			requestN = int(*imageReq.N)
 		}
 		if requestN > 0 && actualCount < requestN {
 			info.PriceData.ModelPrice = info.PriceData.ModelPrice / float64(requestN) * float64(actualCount)

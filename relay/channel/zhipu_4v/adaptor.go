@@ -57,8 +57,8 @@ func (a *Adaptor) ConvertAudioRequest(c *gin.Context, info *relaycommon.RelayInf
 	// voice_speed: prefer VoiceSpeed (Kling native), fallback to Speed (OpenAI compat)
 	if request.VoiceSpeed > 0 {
 		klingReq["voice_speed"] = request.VoiceSpeed
-	} else if request.Speed > 0 {
-		klingReq["voice_speed"] = request.Speed
+	} else if request.Speed != nil && *request.Speed > 0 {
+		klingReq["voice_speed"] = *request.Speed
 	}
 	data, err := json.Marshal(klingReq)
 	if err != nil {
@@ -71,7 +71,7 @@ func (a *Adaptor) ConvertImageRequest(c *gin.Context, info *relaycommon.RelayInf
 	zhipuReq := zhipuImageRequest{
 		Model:   request.Model,
 		Prompt:  request.Prompt,
-		N:       request.N,
+		N:       lo.FromPtrOr(request.N, 0),
 		Quality: request.Quality,
 		Size:    request.Size,
 	}

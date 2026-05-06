@@ -55,11 +55,9 @@ export function ModelsChartPreferences(props: ModelsChartPreferencesProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant='outline' size='sm'>
-          <Settings2 className='mr-2 h-4 w-4' />
-          {t('Preferences')}
-        </Button>
+      <DialogTrigger render={<Button variant='outline' size='sm' />}>
+        <Settings2 className='mr-2 h-4 w-4' />
+        {t('Preferences')}
       </DialogTrigger>
       <DialogContent className='sm:max-w-md'>
         <DialogHeader>

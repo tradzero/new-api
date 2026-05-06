@@ -3,13 +3,13 @@ import { useState, useMemo } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Music } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { getUserAvatarFallback, getUserAvatarStyle } from '@/lib/avatar'
 import { formatTimestampToDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { DataTableColumnHeader } from '@/components/data-table'
 import { StatusBadge } from '@/components/status-badge'
 import { TASK_ACTIONS, TASK_STATUS } from '../../constants'
-import { getLogAvatarStyle } from '../../lib/avatar-color'
 import { taskActionMapper, taskStatusMapper } from '../../lib/mappers'
 import type { TaskLog } from '../../types'
 import {
@@ -131,10 +131,10 @@ export function useTaskLogsColumns(isAdmin: boolean): ColumnDef<TaskLog>[] {
                   !sensitiveVisible && 'bg-muted text-muted-foreground'
                 )}
                 style={
-                  sensitiveVisible ? getLogAvatarStyle(displayName) : undefined
+                  sensitiveVisible ? getUserAvatarStyle(displayName) : undefined
                 }
               >
-                {sensitiveVisible ? displayName.charAt(0).toUpperCase() : '•'}
+                {sensitiveVisible ? getUserAvatarFallback(displayName) : '•'}
               </AvatarFallback>
             </Avatar>
             <span className='text-muted-foreground truncate text-sm hover:underline'>

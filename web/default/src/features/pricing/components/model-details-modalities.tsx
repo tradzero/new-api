@@ -45,13 +45,15 @@ export function ModalityIcons(props: {
         const Icon = meta.icon
         return (
           <Tooltip key={modality}>
-            <TooltipTrigger asChild>
-              <span
-                aria-label={t(meta.labelKey)}
-                className='text-foreground/80 inline-flex'
-              >
-                <Icon className={cn('size-3.5', props.className)} />
-              </span>
+            <TooltipTrigger
+              render={
+                <span
+                  aria-label={t(meta.labelKey)}
+                  className='text-foreground/80 inline-flex'
+                />
+              }
+            >
+              <Icon className={cn('size-3.5', props.className)} />
             </TooltipTrigger>
             <TooltipContent side='top' className='text-xs'>
               {t(meta.labelKey)}

@@ -260,19 +260,21 @@ export function PasskeyCard({ loading: pageLoading }: PasskeyCardProps) {
             {enabled && (
               <div className='flex flex-col gap-3 border-t pt-6 sm:flex-row xl:flex-col 2xl:flex-row'>
                 <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant='destructive'
-                      className='flex-1'
-                      disabled={removing}
-                    >
-                      {removing ? (
-                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                      ) : (
-                        <AlertTriangle className='mr-2 h-4 w-4' />
-                      )}
-                      {t('Remove Passkey')}
-                    </Button>
+                  <AlertDialogTrigger
+                    render={
+                      <Button
+                        variant='destructive'
+                        className='flex-1'
+                        disabled={removing}
+                      />
+                    }
+                  >
+                    {removing ? (
+                      <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                    ) : (
+                      <AlertTriangle className='mr-2 h-4 w-4' />
+                    )}
+                    {t('Remove Passkey')}
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>

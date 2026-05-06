@@ -109,7 +109,7 @@ function SegmentedControl(props: {
 
         return (
           <Tooltip key={option.value}>
-            <TooltipTrigger asChild>{button}</TooltipTrigger>
+            <TooltipTrigger render={button}></TooltipTrigger>
             <TooltipContent side='bottom' className='text-xs'>
               {option.tooltip}
             </TooltipContent>
@@ -196,18 +196,18 @@ export function PricingToolbar(props: PricingToolbarProps) {
           </div>
 
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                className='h-8 gap-1.5 px-3 text-xs'
-              >
-                <ArrowUpDown className='size-3.5' />
-                <span>
-                  {sortLabels[props.sortBy as SortOption] || t('Sort')}
-                </span>
-              </Button>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  className='h-8 gap-1.5 px-3 text-xs'
+                />
+              }
+            >
+              <ArrowUpDown className='size-3.5' />
+              <span>{sortLabels[props.sortBy as SortOption] || t('Sort')}</span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align='end' className='w-44'>
               {Object.entries(sortLabels).map(([value, label]) => (

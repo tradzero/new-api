@@ -113,11 +113,13 @@ export function ModelBadge(props: ModelBadgeProps) {
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <button type='button' className='inline-flex items-center gap-1'>
-          <ModelBadgeContent {...props} />
-          <Route className='text-muted-foreground size-3 shrink-0' />
-        </button>
+      <PopoverTrigger
+        render={
+          <button type='button' className='inline-flex items-center gap-1' />
+        }
+      >
+        <ModelBadgeContent {...props} />
+        <Route className='text-muted-foreground size-3 shrink-0' />
       </PopoverTrigger>
       <PopoverContent className='w-72'>
         <div className='space-y-2'>

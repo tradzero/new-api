@@ -261,7 +261,7 @@ export function SubscriptionPlansCard({
             <div className='flex w-full items-center gap-2 sm:w-auto'>
               <Select
                 value={displayPref}
-                onValueChange={handlePreferenceChange}
+                onValueChange={(v) => v !== null && handlePreferenceChange(v)}
               >
                 <SelectTrigger className='h-8 flex-1 text-xs sm:w-[140px] sm:flex-none'>
                   <SelectValue />
@@ -393,12 +393,12 @@ export function SubscriptionPlansCard({
                         {t('Total Quota')}:{' '}
                         {totalAmount > 0 ? (
                           <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className='cursor-help'>
-                                {formatQuota(usedAmount)}/
-                                {formatQuota(totalAmount)} · {t('Remaining')}{' '}
-                                {formatQuota(remainAmount)}
-                              </span>
+                            <TooltipTrigger
+                              render={<span className='cursor-help' />}
+                            >
+                              {formatQuota(usedAmount)}/
+                              {formatQuota(totalAmount)} · {t('Remaining')}{' '}
+                              {formatQuota(remainAmount)}
                             </TooltipTrigger>
                             <TooltipContent>
                               {t('Raw Quota')}: {usedAmount}/{totalAmount} ·{' '}
@@ -512,16 +512,10 @@ export function SubscriptionPlansCard({
 
                     {reached ? (
                       <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div>
-                            <Button
-                              variant='outline'
-                              className='w-full'
-                              disabled
-                            >
-                              {t('Limit Reached')}
-                            </Button>
-                          </div>
+                        <TooltipTrigger render={<div />}>
+                          <Button variant='outline' className='w-full' disabled>
+                            {t('Limit Reached')}
+                          </Button>
                         </TooltipTrigger>
                         <TooltipContent>
                           {t('Purchase limit reached')} ({count}/{limit})

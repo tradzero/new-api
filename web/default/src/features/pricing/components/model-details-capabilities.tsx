@@ -131,7 +131,7 @@ export function ModelDetailsCapabilities(props: {
   }
 
   return (
-    <div className='grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4'>
+    <div className='grid grid-cols-2 gap-2 @md/details:grid-cols-3 @2xl/details:grid-cols-4'>
       {ordered.map((capability) => {
         const meta = CAPABILITY_META[capability]
         if (!meta) return null

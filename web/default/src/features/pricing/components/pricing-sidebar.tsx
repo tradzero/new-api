@@ -118,7 +118,7 @@ function FilterSection(props: FilterSectionProps) {
         <span className='text-foreground text-sm font-semibold'>
           {props.title}
         </span>
-        <ChevronDown className='text-muted-foreground size-4 transition-transform group-data-[state=open]:rotate-180' />
+        <ChevronDown className='text-muted-foreground size-4 transition-transform group-data-[panel-open]:rotate-180' />
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className='flex flex-wrap gap-1.5'>

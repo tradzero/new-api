@@ -86,24 +86,26 @@ export function UptimeSparkline(props: UptimeSparklineProps) {
       >
         {props.series.map((day) => (
           <Tooltip key={day.date}>
-            <TooltipTrigger asChild>
-              <div
-                className={cn(
-                  'rounded-[1px] transition-opacity hover:opacity-80',
-                  barWidth,
-                  containerHeight,
-                  'flex items-end'
-                )}
-              >
+            <TooltipTrigger
+              render={
                 <div
                   className={cn(
-                    'w-full rounded-[1px]',
-                    colourFor(day.uptime_pct),
-                    heightFor(day.uptime_pct)
+                    'rounded-[1px] transition-opacity hover:opacity-80',
+                    barWidth,
+                    containerHeight,
+                    'flex items-end'
                   )}
-                  aria-hidden
                 />
-              </div>
+              }
+            >
+              <div
+                className={cn(
+                  'w-full rounded-[1px]',
+                  colourFor(day.uptime_pct),
+                  heightFor(day.uptime_pct)
+                )}
+                aria-hidden
+              />
             </TooltipTrigger>
             <TooltipContent side='top' className='font-mono text-xs'>
               <div className='font-medium'>{day.date}</div>

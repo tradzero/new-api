@@ -99,7 +99,7 @@ export function ModelDetailsQuickStats(props: QuickStatsProps) {
   const stats = buildStats(props.metadata, t)
 
   return (
-    <div className='bg-muted/20 grid grid-cols-2 gap-px overflow-hidden rounded-lg border sm:grid-cols-3 lg:grid-cols-5'>
+    <div className='bg-muted/20 grid grid-cols-2 gap-px overflow-hidden rounded-lg border @md/details:grid-cols-3 @2xl/details:grid-cols-5'>
       {stats.map((stat) => {
         const Icon = stat.icon
         return (
@@ -109,15 +109,15 @@ export function ModelDetailsQuickStats(props: QuickStatsProps) {
               'bg-background flex min-w-0 flex-col gap-0.5 px-3 py-2.5'
             )}
           >
-            <span className='text-muted-foreground inline-flex items-center gap-1 text-[10px] font-medium tracking-wider uppercase'>
-              <Icon className='size-3' />
-              {stat.label}
+            <span className='text-muted-foreground inline-flex min-w-0 items-center gap-1 text-[10px] font-medium tracking-wider uppercase'>
+              <Icon className='size-3 shrink-0' />
+              <span className='truncate'>{stat.label}</span>
             </span>
             <span className='text-foreground truncate text-sm font-semibold tabular-nums'>
               {stat.value}
             </span>
             {stat.hint && (
-              <span className='text-muted-foreground/60 text-[10px]'>
+              <span className='text-muted-foreground/60 truncate text-[10px]'>
                 {stat.hint}
               </span>
             )}

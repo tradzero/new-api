@@ -371,8 +371,8 @@ export function usePricingColumns(
         return (
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger asChild>
-                <div>{renderLimitedTags(tags, 2)}</div>
+              <TooltipTrigger render={<div />}>
+                {renderLimitedTags(tags, 2)}
               </TooltipTrigger>
               {tags.length > 2 && (
                 <TooltipContent side='top' className='max-w-[280px] p-2'>
@@ -401,8 +401,8 @@ export function usePricingColumns(
         return (
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger asChild>
-                <div>{renderLimitedTags(endpoints, 2)}</div>
+              <TooltipTrigger render={<div />}>
+                {renderLimitedTags(endpoints, 2)}
               </TooltipTrigger>
               {endpoints.length > 2 && (
                 <TooltipContent side='top' className='max-w-[280px] p-2'>
@@ -431,8 +431,8 @@ export function usePricingColumns(
         return (
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger asChild>
-                <div>{renderLimitedGroupBadges(groups, 2)}</div>
+              <TooltipTrigger render={<div />}>
+                {renderLimitedGroupBadges(groups, 2)}
               </TooltipTrigger>
               {groups.length > 2 && (
                 <TooltipContent side='top' className='max-w-[280px] p-2'>

@@ -101,8 +101,13 @@ func Distribute() func(c *gin.Context) {
 
 				if preferredChannelID, found := service.GetPreferredChannelByAffinity(c, modelRequest.Model, usingGroup); found {
 					preferred, err := model.CacheGetChannel(preferredChannelID)
-					if err == nil && preferred != nil && preferred.Status == common.ChannelStatusEnabled {
-						if usingGroup == "auto" {
+					if err == nil && preferred != nil {
+						if preferred.Status != common.ChannelStatusEnabled {
+							if service.ShouldSkipRetryAfterChannelAffinityFailure(c) {
+								abortWithOpenAiMessage(c, http.StatusForbidden, i18n.T(c, i18n.MsgDistributorAffinityChannelDisabled))
+								return
+							}
+						} else if usingGroup == "auto" {
 							userGroup := common.GetContextKeyString(c, constant.ContextKeyUserGroup)
 							autoGroups := service.GetUserAutoGroup(userGroup)
 							for _, g := range autoGroups {
@@ -216,20 +221,6 @@ func getModelRequest(c *gin.Context) (*ModelRequest, bool, error) {
 		}
 		c.Set("platform", string(constant.TaskPlatformSuno))
 		c.Set("relay_mode", relayMode)
-	} else if strings.Contains(c.Request.URL.Path, "/v1/audio/custom") {
-		relayMode := relayconstant.RelayModeAudioTaskSubmit
-		req, err := getModelFromRequest(c)
-		if err != nil {
-			return nil, false, err
-		}
-		if req != nil {
-			modelRequest.Model = req.Model
-		}
-		c.Set("relay_mode", relayMode)
-	} else if strings.Contains(c.Request.URL.Path, "/v1/audio/tasks/") {
-		relayMode := relayconstant.RelayModeAudioTaskFetchByID
-		shouldSelectChannel = false
-		c.Set("relay_mode", relayMode)
 	} else if strings.Contains(c.Request.URL.Path, "/v1/videos/") && strings.HasSuffix(c.Request.URL.Path, "/remix") {
 		relayMode := relayconstant.RelayModeVideoSubmit
 		c.Set("relay_mode", relayMode)
@@ -312,9 +303,7 @@ func getModelRequest(c *gin.Context) (*ModelRequest, bool, error) {
 			}
 		}
 	}
-	if strings.HasPrefix(c.Request.URL.Path, "/v1/audio") &&
-		!strings.HasPrefix(c.Request.URL.Path, "/v1/audio/custom") &&
-		!strings.HasPrefix(c.Request.URL.Path, "/v1/audio/tasks") {
+	if strings.HasPrefix(c.Request.URL.Path, "/v1/audio") {
 		relayMode := relayconstant.RelayModeAudioSpeech
 		if strings.HasPrefix(c.Request.URL.Path, "/v1/audio/speech") {
 
@@ -335,12 +324,6 @@ func getModelRequest(c *gin.Context) (*ModelRequest, bool, error) {
 			relayMode = relayconstant.RelayModeAudioTranscription
 		}
 		c.Set("relay_mode", relayMode)
-	}
-	if strings.HasPrefix(c.Request.URL.Path, "/v1/elements") {
-		c.Set("relay_mode", relayconstant.RelayModeElementCreate)
-	}
-	if strings.HasPrefix(c.Request.URL.Path, "/v1/video/identify-face") {
-		c.Set("relay_mode", relayconstant.RelayModeIdentifyFace)
 	}
 	if strings.HasPrefix(c.Request.URL.Path, "/pg/chat/completions") {
 		// playground chat completions

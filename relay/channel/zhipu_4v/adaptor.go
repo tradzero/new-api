@@ -37,28 +37,21 @@ func (a *Adaptor) ConvertClaudeRequest(c *gin.Context, info *relaycommon.RelayIn
 func (a *Adaptor) ConvertAudioRequest(c *gin.Context, info *relaycommon.RelayInfo, request dto.AudioRequest) (io.Reader, error) {
 	klingReq := map[string]any{
 		"model": request.Model,
+		"text":  request.Input,
 	}
-	// text: prefer Text (Kling native), fallback to Input (OpenAI compat)
-	if request.Text != "" {
-		klingReq["text"] = request.Text
-	} else {
-		klingReq["text"] = request.Input
-	}
-	// voice_id: prefer VoiceID (Kling native), fallback to Voice (OpenAI compat)
-	if request.VoiceID != "" {
-		klingReq["voice_id"] = request.VoiceID
-	} else if request.Voice != "" {
+	if request.Voice != "" {
 		klingReq["voice_id"] = request.Voice
 	}
-	// voice_language
-	if request.VoiceLanguage != "" {
-		klingReq["voice_language"] = request.VoiceLanguage
-	}
-	// voice_speed: prefer VoiceSpeed (Kling native), fallback to Speed (OpenAI compat)
-	if request.VoiceSpeed > 0 {
-		klingReq["voice_speed"] = request.VoiceSpeed
-	} else if request.Speed != nil && *request.Speed > 0 {
+	if request.Speed != nil && *request.Speed > 0 {
 		klingReq["voice_speed"] = *request.Speed
+	}
+	if len(request.Metadata) > 0 {
+		var metadata map[string]any
+		if err := json.Unmarshal(request.Metadata, &metadata); err == nil {
+			for key, value := range metadata {
+				klingReq[key] = value
+			}
+		}
 	}
 	data, err := json.Marshal(klingReq)
 	if err != nil {
@@ -134,6 +127,9 @@ func (a *Adaptor) GetRequestURL(info *relaycommon.RelayInfo) (string, error) {
 			}
 			return fmt.Sprintf("%s/api/paas/v4/embeddings", baseURL), nil
 		case relayconstant.RelayModeImagesGenerations:
+			if hasSpecialPlan && specialPlan.OpenAIBaseURL != "" {
+				return fmt.Sprintf("%s/images/generations", specialPlan.OpenAIBaseURL), nil
+			}
 			return fmt.Sprintf("%s/api/paas/v4/images/generations", baseURL), nil
 		default:
 			if hasSpecialPlan && specialPlan.OpenAIBaseURL != "" {

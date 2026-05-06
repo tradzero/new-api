@@ -42,30 +42,30 @@ type zhipuVideoRequest struct {
 	RequestID        string `json:"request_id,omitempty"`
 	UserID           string `json:"user_id,omitempty"`
 	// Common video generation params
-	FirstFrameImage  string `json:"first_frame_image,omitempty"`
-	LastFrameImage   string `json:"last_frame_image,omitempty"`
-	
-	AspectRatio        string `json:"aspect_ratio,omitempty"`
-	NegativePrompt     string `json:"negative_prompt,omitempty"`
-	PersonGeneration   string `json:"person_generation,omitempty"`
-	SampleCount        int    `json:"sample_count,omitempty"`
-	Seed               int    `json:"seed,omitempty"`
-	ResizeMode         string `json:"resize_mode,omitempty"`
-	CompressionQuality string `json:"compression_quality,omitempty"`
-	GenerateAudio      *bool  `json:"generate_audio,omitempty"`
-	ServiceTier        string `json:"service_tier,omitempty"`
+	FirstFrameImage string `json:"first_frame_image,omitempty"`
+	LastFrameImage  string `json:"last_frame_image,omitempty"`
+
+	AspectRatio           string `json:"aspect_ratio,omitempty"`
+	NegativePrompt        string `json:"negative_prompt,omitempty"`
+	PersonGeneration      string `json:"person_generation,omitempty"`
+	SampleCount           int    `json:"sample_count,omitempty"`
+	Seed                  int    `json:"seed,omitempty"`
+	ResizeMode            string `json:"resize_mode,omitempty"`
+	CompressionQuality    string `json:"compression_quality,omitempty"`
+	GenerateAudio         *bool  `json:"generate_audio,omitempty"`
+	ServiceTier           string `json:"service_tier,omitempty"`
 	ExecutionExpiresAfter int    `json:"execution_expires_after,omitempty"`
-	Resolution         string `json:"resolution,omitempty"`
-	PromptOptimizer    *bool  `json:"prompt_optimizer,omitempty"`
-	FastPretreatment   *bool  `json:"fast_pretreatment,omitempty"`
-	VideoList          any    `json:"video_list,omitempty"`
-	ImageList          any    `json:"image_list,omitempty"`
-	ElementList        any    `json:"element_list,omitempty"`
-	Sound              string `json:"sound,omitempty"`
-	VoiceList          any    `json:"voice_list,omitempty"`
-	VideoURL           string `json:"video_url,omitempty"`
-	KeepOriginalSound  string `json:"keep_original_sound,omitempty"`
-	CharacterOrientation string `json:"character_orientation,omitempty"`
+	Resolution            string `json:"resolution,omitempty"`
+	PromptOptimizer       *bool  `json:"prompt_optimizer,omitempty"`
+	FastPretreatment      *bool  `json:"fast_pretreatment,omitempty"`
+	VideoList             any    `json:"video_list,omitempty"`
+	ImageList             any    `json:"image_list,omitempty"`
+	ElementList           any    `json:"element_list,omitempty"`
+	Sound                 string `json:"sound,omitempty"`
+	VoiceList             any    `json:"voice_list,omitempty"`
+	VideoURL              string `json:"video_url,omitempty"`
+	KeepOriginalSound     string `json:"keep_original_sound,omitempty"`
+	CharacterOrientation  string `json:"character_orientation,omitempty"`
 	// Async audio task params (kling-custom-voice)
 	VoiceName      string `json:"voice_name,omitempty"`
 	VoiceURL       string `json:"voice_url,omitempty"`
@@ -681,47 +681,47 @@ func (a *TaskAdaptor) ConvertToOpenAIVideo(originTask *model.Task) ([]byte, erro
 
 func (a *TaskAdaptor) convertToRequestPayload(req *relaycommon.TaskSubmitReq) *zhipuVideoRequest {
 	body := &zhipuVideoRequest{
-		Model:              req.Model,
-		WithAudio:          req.WithAudio,
-		GenerateAudio:      req.GenerateAudio,
-		ServiceTier:        req.ServiceTier,
-		RequestID:          req.RequestID,
-		AspectRatio:        req.AspectRatio,
-		NegativePrompt:     req.NegativePrompt,
-		PersonGeneration:   req.PersonGeneration,
-		SampleCount:        req.SampleCount,
-		Seed:               req.Seed,
-		ResizeMode:         req.ResizeMode,
-		CompressionQuality: req.CompressionQuality,
-		FirstFrameImage:    req.FirstFrameImage,
-		LastFrameImage:     req.LastFrameImage,
-		Resolution:         req.Resolution,
-		PromptOptimizer:    req.PromptOptimizer,
-		FastPretreatment:   req.FastPretreatment,
-		Quality:            req.Quality,
-		FPS:                req.FPS,
-		Mode:               req.Mode,
-		VideoList:          req.VideoList,
-		ImageList:          req.ImageList,
-		ElementList:        req.ElementList,
-		Sound:              req.Sound,
-		VoiceList:          req.VoiceList,
-		VideoURL:           req.VideoURL,
-		KeepOriginalSound:  req.KeepOriginalSound,
+		Model:                req.Model,
+		WithAudio:            req.WithAudio,
+		GenerateAudio:        req.GenerateAudio,
+		ServiceTier:          req.ServiceTier,
+		RequestID:            req.RequestID,
+		AspectRatio:          req.AspectRatio,
+		NegativePrompt:       req.NegativePrompt,
+		PersonGeneration:     req.PersonGeneration,
+		SampleCount:          req.SampleCount,
+		Seed:                 req.Seed,
+		ResizeMode:           req.ResizeMode,
+		CompressionQuality:   req.CompressionQuality,
+		FirstFrameImage:      req.FirstFrameImage,
+		LastFrameImage:       req.LastFrameImage,
+		Resolution:           req.Resolution,
+		PromptOptimizer:      req.PromptOptimizer,
+		FastPretreatment:     req.FastPretreatment,
+		Quality:              req.Quality,
+		FPS:                  req.FPS,
+		Mode:                 req.Mode,
+		VideoList:            req.VideoList,
+		ImageList:            req.ImageList,
+		ElementList:          req.ElementList,
+		Sound:                req.Sound,
+		VoiceList:            req.VoiceList,
+		VideoURL:             req.VideoURL,
+		KeepOriginalSound:    req.KeepOriginalSound,
 		CharacterOrientation: req.CharacterOrientation,
-		VoiceName:           req.VoiceName,
-		VoiceURL:            req.VoiceURL,
-		VideoID:             req.VideoID,
-		CallbackConfig:      req.CallbackConfig,
-		SessionID:           req.SessionID,
-		FaceID:              req.FaceID,
-		AudioID:             req.AudioID,
-		AudioURL:            req.AudioURL,
-		SoundStartTime:      req.SoundStartTime,
-		SoundEndTime:        req.SoundEndTime,
-		SoundInsertTime:     req.SoundInsertTime,
-		SoundVolume:         req.SoundVolume,
-		OriginalAudioVolume: req.OriginalAudioVolume,
+		VoiceName:            req.VoiceName,
+		VoiceURL:             req.VoiceURL,
+		VideoID:              req.VideoID,
+		CallbackConfig:       req.CallbackConfig,
+		SessionID:            req.SessionID,
+		FaceID:               req.FaceID,
+		AudioID:              req.AudioID,
+		AudioURL:             req.AudioURL,
+		SoundStartTime:       req.SoundStartTime,
+		SoundEndTime:         req.SoundEndTime,
+		SoundInsertTime:      req.SoundInsertTime,
+		SoundVolume:          req.SoundVolume,
+		OriginalAudioVolume:  req.OriginalAudioVolume,
 	}
 
 	if body.Model == "" {

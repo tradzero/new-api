@@ -61,20 +61,6 @@ func (i *ImageRequest) UnmarshalJSON(data []byte) error {
 			i.Extra[k] = v
 		}
 	}
-
-	// Map sequential_image_generation_options.max_images to N for billing
-	// For zhipu 4v channel
-	if i.N == nil {
-		if val, ok := i.Extra["sequential_image_generation_options"]; ok {
-			var opts struct {
-				MaxImages uint `json:"max_images"`
-			}
-			if err := json.Unmarshal(val, &opts); err == nil && opts.MaxImages > 0 {
-				i.N = &opts.MaxImages
-			}
-		}
-	}
-
 	return nil
 }
 
@@ -162,15 +148,14 @@ func (i *ImageRequest) GetTokenCountMeta() *types.TokenCountMeta {
 		}
 	}
 
-	// not support token count for dalle
-	n := uint(1)
-	if i.N != nil {
-		n = *i.N
-	}
+	// n is NOT included here; it is handled via OtherRatio("n") in
+	// image_handler.go (default) or channel adaptors (actual count).
+	// Including n here caused double-counting for channels that also
+	// set OtherRatio("n") (e.g. Ali/Bailian).
 	return &types.TokenCountMeta{
 		CombineText:     i.Prompt,
 		MaxTokens:       1584,
-		ImagePriceRatio: sizeRatio * qualityRatio * float64(n),
+		ImagePriceRatio: sizeRatio * qualityRatio,
 	}
 }
 

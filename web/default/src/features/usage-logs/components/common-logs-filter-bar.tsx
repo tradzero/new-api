@@ -1,22 +1,49 @@
+/*
+Copyright (C) 2023-2026 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
 import { useState, useEffect, useCallback } from 'react'
 import { useQueryClient, useIsFetching } from '@tanstack/react-query'
 import { useNavigate, getRouteApi } from '@tanstack/react-router'
 import { type Table } from '@tanstack/react-table'
+import { Eye, EyeOff } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useIsAdmin } from '@/hooks/use-admin'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { DataTableToolbar } from '@/components/data-table'
 import { LOG_TYPES } from '../constants'
 import { buildSearchParams } from '../lib/filter'
 import { getDefaultTimeRange } from '../lib/utils'
 import type { CommonLogFilters } from '../types'
+import { CommonLogsStats } from './common-logs-stats'
 import { CompactDateTimeRangePicker } from './compact-date-time-range-picker'
 import { useUsageLogsContext } from './usage-logs-provider'
 
@@ -41,7 +68,7 @@ export function CommonLogsFilterBar<TData>(
   const queryClient = useQueryClient()
   const searchParams = route.useSearch()
   const isAdmin = useIsAdmin()
-  const { sensitiveVisible } = useUsageLogsContext()
+  const { sensitiveVisible, setSensitiveVisible } = useUsageLogsContext()
   const fetchingLogs = useIsFetching({ queryKey: ['logs'] })
 
   const [filters, setFilters] = useState<CommonLogFilters>(() => {
@@ -61,6 +88,8 @@ export function CommonLogsFilterBar<TData>(
     if (searchParams.group) next.group = searchParams.group
     if (searchParams.username) next.username = searchParams.username
     if (searchParams.requestId) next.requestId = searchParams.requestId
+    if (searchParams.upstreamRequestId)
+      next.upstreamRequestId = searchParams.upstreamRequestId
 
     if (Object.keys(next).length > 0) {
       setFilters((prev) => ({ ...prev, ...next }))
@@ -79,6 +108,7 @@ export function CommonLogsFilterBar<TData>(
     searchParams.group,
     searchParams.username,
     searchParams.requestId,
+    searchParams.upstreamRequestId,
     searchParams.type,
   ])
 
@@ -134,7 +164,8 @@ export function CommonLogsFilterBar<TData>(
     !!filters.token ||
     !!filters.username ||
     !!filters.channel ||
-    !!filters.requestId
+    !!filters.requestId ||
+    !!filters.upstreamRequestId
 
   const hasAdditionalFilters =
     !!filters.model || !!filters.group || !!logType || hasExpandedFilters
@@ -142,9 +173,34 @@ export function CommonLogsFilterBar<TData>(
   const inputClass = 'w-full sm:w-[140px] lg:w-[160px]'
   const sensitiveType = sensitiveVisible ? 'text' : 'password'
 
+  const statsBar = (
+    <div className='flex flex-wrap items-center gap-2'>
+      <CommonLogsStats />
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant='ghost'
+              size='icon'
+              onClick={() => setSensitiveVisible(!sensitiveVisible)}
+              aria-label={sensitiveVisible ? t('Hide') : t('Show')}
+              className='text-muted-foreground hover:text-foreground size-7'
+            />
+          }
+        >
+          {sensitiveVisible ? <Eye /> : <EyeOff />}
+        </TooltipTrigger>
+        <TooltipContent>
+          {sensitiveVisible ? t('Hide') : t('Show')}
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  )
+
   return (
     <DataTableToolbar
       table={props.table}
+      leftActions={statsBar}
       customSearch={
         <CompactDateTimeRangePicker
           start={filters.startTime}
@@ -174,6 +230,13 @@ export function CommonLogsFilterBar<TData>(
             className={inputClass}
           />
           <Select
+            items={[
+              { value: 'all', label: t('All Types') },
+              ...LOG_TYPES.map((type) => ({
+                value: String(type.value),
+                label: t(type.label),
+              })),
+            ]}
             value={logType}
             onValueChange={(value) => {
               setLogType(value !== null && isLogTypeValue(value) ? value : '')
@@ -182,13 +245,15 @@ export function CommonLogsFilterBar<TData>(
             <SelectTrigger className={inputClass}>
               <SelectValue placeholder={t('All Types')} />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='all'>{t('All Types')}</SelectItem>
-              {LOG_TYPES.map((type) => (
-                <SelectItem key={type.value} value={String(type.value)}>
-                  {t(type.label)}
-                </SelectItem>
-              ))}
+            <SelectContent alignItemWithTrigger={false}>
+              <SelectGroup>
+                <SelectItem value='all'>{t('All Types')}</SelectItem>
+                {LOG_TYPES.map((type) => (
+                  <SelectItem key={type.value} value={String(type.value)}>
+                    {t(type.label)}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
             </SelectContent>
           </Select>
         </>
@@ -226,6 +291,15 @@ export function CommonLogsFilterBar<TData>(
             placeholder={t('Request ID')}
             value={filters.requestId || ''}
             onChange={(e) => handleChange('requestId', e.target.value)}
+            onKeyDown={handleKeyDown}
+            className={inputClass}
+          />
+          <Input
+            placeholder={t('Upstream Request ID')}
+            value={filters.upstreamRequestId || ''}
+            onChange={(e) =>
+              handleChange('upstreamRequestId', e.target.value)
+            }
             onKeyDown={handleKeyDown}
             className={inputClass}
           />

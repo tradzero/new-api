@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2023-2026 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
 import { api } from '@/lib/api'
 import type { PricingData } from './types'
 
@@ -8,48 +26,5 @@ import type { PricingData } from './types'
 // Get model pricing data
 export async function getPricing(): Promise<PricingData> {
   const res = await api.get('/api/pricing')
-  return res.data
-}
-
-export type PerformanceSeriesPoint = {
-  ts: number
-  avg_ttft_ms: number
-  avg_latency_ms: number
-  success_rate: number
-  count: number
-  success_count: number
-  ttft_count: number
-}
-
-export type PerformanceGroup = {
-  group: string
-  avg_ttft_ms: number
-  avg_latency_ms: number
-  success_rate: number
-  request_count: number
-  success_count: number
-  ttft_count: number
-  series: PerformanceSeriesPoint[]
-}
-
-export type PerformanceMetricsData = {
-  success: boolean
-  message?: string
-  data: {
-    model_name: string
-    series_schema?: string
-    groups: PerformanceGroup[]
-  }
-}
-
-export async function getPerfMetrics(
-  modelName: string,
-  hours = 24
-): Promise<PerformanceMetricsData> {
-  const params = new URLSearchParams({
-    model: modelName,
-    hours: String(hours),
-  })
-  const res = await api.get(`/api/perf-metrics?${params.toString()}`)
   return res.data
 }

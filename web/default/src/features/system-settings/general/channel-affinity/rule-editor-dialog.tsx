@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2023-2026 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Plus, Trash2 } from 'lucide-react'
@@ -21,6 +39,7 @@ import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -31,7 +50,12 @@ import { Textarea } from '@/components/ui/textarea'
 import { RULE_TEMPLATES } from './constants'
 import type { AffinityRule, KeySource } from './types'
 
-const KEY_SOURCE_TYPES = ['context_int', 'context_string', 'gjson'] as const
+const KEY_SOURCE_TYPES = [
+  'context_int',
+  'context_string',
+  'request_header',
+  'gjson',
+] as const
 
 const CONTEXT_KEY_PRESETS = [
   'id',
@@ -276,6 +300,9 @@ export function RuleEditorDialog(props: Props) {
               {keySources.map((src, idx) => (
                 <div key={idx} className='flex items-center gap-2'>
                   <Select
+                    items={[
+                      ...KEY_SOURCE_TYPES.map((t) => ({ value: t, label: t })),
+                    ]}
                     value={src.type}
                     onValueChange={(v) => {
                       if (v === null) return
@@ -290,12 +317,14 @@ export function RuleEditorDialog(props: Props) {
                     <SelectTrigger className='w-[160px]'>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      {KEY_SOURCE_TYPES.map((t) => (
-                        <SelectItem key={t} value={t}>
-                          {t}
-                        </SelectItem>
-                      ))}
+                    <SelectContent alignItemWithTrigger={false}>
+                      <SelectGroup>
+                        {KEY_SOURCE_TYPES.map((t) => (
+                          <SelectItem key={t} value={t}>
+                            {t}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
                     </SelectContent>
                   </Select>
                   <Input

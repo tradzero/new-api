@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2023-2026 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
 import { useCallback, useEffect, useState } from 'react'
 import * as z from 'zod'
 import { useForm } from 'react-hook-form'
@@ -33,6 +51,7 @@ import { Progress } from '@/components/ui/progress'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -508,6 +527,11 @@ export function PerformanceSection(props: Props) {
                 <FormItem>
                   <FormLabel>{t('Aggregation bucket')}</FormLabel>
                   <Select
+                    items={[
+                      { value: 'minute', label: t('1 minute') },
+                      { value: '5min', label: t('5 minutes') },
+                      { value: 'hour', label: t('1 hour') },
+                    ]}
                     value={field.value}
                     onValueChange={field.onChange}
                     disabled={!perfMetricsEnabled}
@@ -517,10 +541,12 @@ export function PerformanceSection(props: Props) {
                         <SelectValue />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value='minute'>{t('1 minute')}</SelectItem>
-                      <SelectItem value='5min'>{t('5 minutes')}</SelectItem>
-                      <SelectItem value='hour'>{t('1 hour')}</SelectItem>
+                    <SelectContent alignItemWithTrigger={false}>
+                      <SelectGroup>
+                        <SelectItem value='minute'>{t('1 minute')}</SelectItem>
+                        <SelectItem value='5min'>{t('5 minutes')}</SelectItem>
+                        <SelectItem value='hour'>{t('1 hour')}</SelectItem>
+                      </SelectGroup>
                     </SelectContent>
                   </Select>
                 </FormItem>
@@ -605,19 +631,25 @@ export function PerformanceSection(props: Props) {
               <div className='grid gap-1.5'>
                 <Label className='text-xs'>{t('Cleanup Mode')}</Label>
                 <Select
+                  items={[
+                    { value: 'by_count', label: t('Retain last N files') },
+                    { value: 'by_days', label: t('Retain last N days') },
+                  ]}
                   value={logCleanupMode}
                   onValueChange={(v) => v !== null && setLogCleanupMode(v)}
                 >
                   <SelectTrigger className='w-[160px]'>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='by_count'>
-                      {t('Retain last N files')}
-                    </SelectItem>
-                    <SelectItem value='by_days'>
-                      {t('Retain last N days')}
-                    </SelectItem>
+                  <SelectContent alignItemWithTrigger={false}>
+                    <SelectGroup>
+                      <SelectItem value='by_count'>
+                        {t('Retain last N files')}
+                      </SelectItem>
+                      <SelectItem value='by_days'>
+                        {t('Retain last N days')}
+                      </SelectItem>
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
               </div>

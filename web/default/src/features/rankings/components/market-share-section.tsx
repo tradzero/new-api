@@ -1,9 +1,29 @@
+/*
+Copyright (C) 2023-2026 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
 import { useMemo } from 'react'
 import { VChart } from '@visactor/react-vchart'
 import { PieChart } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useThemeRadiusPx } from '@/lib/theme-radius'
 import { useChartTheme } from '@/lib/use-chart-theme'
 import { VCHART_OPTION } from '@/lib/vchart'
+import { useThemeCustomization } from '@/context/theme-customization-provider'
 import { formatShare, formatTokens } from '../lib/format'
 import type { RankingPeriod, VendorRanking, VendorShareSeries } from '../types'
 import { VendorLink } from './entity-links'
@@ -16,7 +36,7 @@ const PERIOD_DESCRIPTIONS: Record<RankingPeriod, string> = {
   all: 'Token share by model author since launch',
 }
 
-/** Stable colour palette for vendors, used in both the area chart and the
+/** Stable colour palette for vendors, used in both the share chart and the
  * legend dots. Falls back to a neutral palette for unknown vendors so that
  * future additions still render. */
 const VENDOR_COLOURS: Record<string, string> = {
@@ -77,13 +97,18 @@ type MarketShareSectionProps = {
 }
 
 /**
- * Combined "Market Share" card: a 100%-stacked area chart showing each
+ * Combined "Market Share" card: a 100%-stacked bar chart showing each
  * vendor's slice of total token volume, paired below with a two-column
  * vendor list.
  */
 export function MarketShareSection(props: MarketShareSectionProps) {
   const { t } = useTranslation()
   const { resolvedTheme, themeReady } = useChartTheme()
+  const { customization } = useThemeCustomization()
+  const barRadius = useThemeRadiusPx(
+    '--radius-sm',
+    `${customization.preset}:${customization.radius}`
+  )
 
   const colourMap = useMemo(
     () => buildVendorColourMap(props.history.vendors.map((v) => v.name)),
@@ -104,18 +129,17 @@ export function MarketShareSection(props: MarketShareSectionProps) {
   const spec = useMemo(() => {
     if (orderedPoints.length === 0) return null
     return {
-      type: 'area' as const,
+      type: 'bar' as const,
       data: [{ id: 'vendor-share', values: orderedPoints }],
       xField: 'label',
       yField: 'share',
       seriesField: 'vendor',
       stack: true,
+      paddingInner: 0.12,
       legends: { visible: false },
-      area: {
-        style: { fillOpacity: 0.85, curveType: 'monotone' },
+      bar: {
+        style: barRadius == null ? {} : { cornerRadius: barRadius },
       },
-      line: { style: { lineWidth: 0, curveType: 'monotone' } },
-      point: { visible: false },
       color: { specified: colourMap },
       axes: [
         {
@@ -178,7 +202,7 @@ export function MarketShareSection(props: MarketShareSectionProps) {
       },
       animationAppear: { duration: 500 },
     }
-  }, [colourMap, orderedPoints])
+  }, [barRadius, colourMap, orderedPoints])
 
   const visible = props.rows.slice(0, MAX_VENDORS_IN_LIST)
   const half = Math.ceil(visible.length / 2)

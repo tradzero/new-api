@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2023-2026 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
 import * as React from 'react'
 import { useState, type ReactNode } from 'react'
 import { type Table } from '@tanstack/react-table'
@@ -87,6 +105,14 @@ export type DataTableToolbarProps<TData> = {
    * Hide the View Options (column visibility) dropdown.
    */
   hideViewOptions?: boolean
+  /**
+   * Content rendered on the LEFT side of the secondary action row. When
+   * provided the toolbar splits into two visual rows:
+   *   Row 1: search inputs / filter chips …… Expand
+   *   Row 2: expanded filters
+   *   Row 3: leftActions …… Reset / Search / ViewOptions
+   */
+  leftActions?: ReactNode
   /**
    * Outer wrapper className override.
    */
@@ -215,6 +241,39 @@ export function DataTableToolbar<TData>(props: DataTableToolbarProps<TData>) {
       />
     </Button>
   ) : null
+
+  const hasLeftActions = props.leftActions != null
+
+  if (hasLeftActions) {
+    return (
+      <div className={cn('flex flex-col gap-2', props.className)}>
+        <div className='flex flex-wrap items-center gap-2 sm:gap-3'>
+          {props.customSearch !== undefined ? props.customSearch : searchInput}
+          {props.additionalSearch}
+          {filterChips}
+          <div className='ms-auto flex shrink-0 items-center gap-1.5 sm:gap-2'>
+            {expandToggle}
+          </div>
+        </div>
+
+        {expanded && hasExpandable && (
+          <div className='flex flex-wrap items-center gap-2 sm:gap-3'>
+            {props.expandable}
+          </div>
+        )}
+
+        <div className='flex flex-wrap items-center gap-2 sm:gap-3'>
+          {props.leftActions}
+          <div className='ms-auto flex shrink-0 items-center gap-1.5 sm:gap-2'>
+            {props.preActions}
+            {resetButton}
+            {searchButton}
+            {viewOptionsNode}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div
